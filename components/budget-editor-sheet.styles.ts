@@ -1,0 +1,224 @@
+import { StyleSheet } from 'react-native';
+
+import { Palette } from '@/constants/colors';
+
+export const budgetEditorStyles = StyleSheet.create({
+  modalRoot: {
+    flex: 1,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  sheet: {
+    backgroundColor: Palette.cardBackground,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 12,
+    maxHeight: '92%',
+  },
+  dragHandleArea: {
+    paddingTop: 4,
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Palette.sheetHandle,
+    marginBottom: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Palette.border,
+  },
+  headerLeft: {
+    fontSize: 16,
+    color: Palette.textMuted,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Palette.text,
+  },
+  headerRight: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Palette.brand,
+  },
+  list: {
+    gap: 14,
+    paddingVertical: 6,
+  },
+  catRow: {
+    backgroundColor: Palette.surface,
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+  },
+  catRowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  catDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  catName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Palette.text,
+  },
+  catNameInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Palette.text,
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.brand,
+    paddingVertical: 0,
+  },
+  iconBtn: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+  },
+  budgetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  budgetLabel: {
+    width: 60,
+    fontSize: 14,
+    color: Palette.textMuted,
+    fontWeight: '600',
+  },
+  budgetInput: {
+    flex: 1,
+    backgroundColor: Palette.cardBackground,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 15,
+    color: Palette.text,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
+  },
+  budgetInputDisabled: {
+    color: Palette.textMuted,
+    backgroundColor: Palette.toggleTrack,
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: Palette.toggleTrack,
+    borderRadius: 999,
+    padding: 3,
+  },
+  modeBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+  },
+  modeBtnActive: {
+    backgroundColor: Palette.cardBackground,
+  },
+  modeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Palette.textSubtle,
+  },
+  modeTextActive: {
+    color: Palette.text,
+  },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Palette.surface,
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
+    borderStyle: 'dashed',
+  },
+  addInput: {
+    flex: 1,
+    fontSize: 15,
+    color: Palette.text,
+    paddingVertical: 8,
+  },
+  addBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: Palette.brand,
+  },
+  addBtnDisabled: {
+    backgroundColor: Palette.submitDisabled,
+  },
+  addBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  primaryBtn: {
+    backgroundColor: Palette.brand,
+    paddingVertical: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  primaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  skipBtn: {
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  skipText: {
+    color: Palette.textMuted,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  hint: {
+    fontSize: 13,
+    color: Palette.textMuted,
+    paddingHorizontal: 4,
+  },
+  kbAccessory: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    backgroundColor: Palette.toggleTrack,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Palette.border,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  kbAccessoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  kbAccessoryText: {
+    fontSize: 16,
+    color: Palette.brand,
+    fontWeight: '600',
+  },
+});

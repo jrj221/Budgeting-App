@@ -3,14 +3,23 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  InputAccessoryView,
   Keyboard,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import {
   formatAmountDisplay,
@@ -23,6 +32,8 @@ import { editStyles as styles } from '@/components/edit-transaction-sheet.styles
 import { ModeColors, Palette } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
 import { useTransactions } from '@/contexts/transactions-context';
+
+const EDIT_NUMPAD_ACCESSORY_ID = 'edit-number-pad-done';
 
 type EditTransactionSheetProps = {
   visible: boolean;
@@ -52,6 +63,9 @@ export function EditTransactionSheet({
 
   const amountInputRef = useRef<TextInput>(null);
 
+  const translateY = useSharedValue(0);
+  const baseY = useSharedValue(0);
+
   useEffect(() => {
     if (!transaction) return;
     setMode(transaction.mode);
@@ -61,6 +75,38 @@ export function EditTransactionSheet({
     setCategoryId(transaction.categoryId);
     setIsDatePickerOpen(false);
   }, [transaction]);
+
+  useEffect(() => {
+    if (visible) {
+      translateY.value = 0;
+      baseY.value = 0;
+    }
+  }, [visible, translateY, baseY]);
+
+  const dragGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onUpdate((e) => {
+          translateY.value = Math.max(0, baseY.value + e.translationY);
+        })
+        .onEnd((e) => {
+          const finalY = Math.max(0, baseY.value + e.translationY);
+          if (finalY > 120 || e.velocityY > 800) {
+            baseY.value = 0;
+            translateY.value = withTiming(0, { duration: 180 });
+            runOnJS(onClose)();
+          } else {
+            baseY.value = 0;
+            translateY.value = withTiming(0, { duration: 180 });
+          }
+        }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onClose],
+  );
+
+  const sheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   const isSeries = !!transaction?.seriesId;
   const canSubmit = useMemo(
@@ -127,16 +173,21 @@ export function EditTransactionSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <View style={styles.grabber} />
-          <View style={styles.header}>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <Text style={styles.headerCancel}>Cancel</Text>
-            </Pressable>
-            <Text style={styles.headerTitle}>Edit transaction</Text>
-            <View style={styles.headerSpacer} />
-          </View>
+      <View style={styles.modalRoot}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Animated.View style={[styles.sheet, sheetAnimatedStyle]}>
+          <GestureDetector gesture={dragGesture}>
+            <View style={styles.dragHandleArea}>
+              <View style={styles.grabber} />
+              <View style={styles.header}>
+                <Pressable onPress={onClose} hitSlop={10}>
+                  <Text style={styles.headerCancel}>Cancel</Text>
+                </Pressable>
+                <Text style={styles.headerTitle}>Edit transaction</Text>
+                <View style={styles.headerSpacer} />
+              </View>
+            </View>
+          </GestureDetector>
 
           <ScrollView
             contentContainerStyle={styles.body}
@@ -176,6 +227,7 @@ export function EditTransactionSheet({
                 style={styles.hiddenInput}
                 caretHidden
                 maxLength={9}
+                inputAccessoryViewID={EDIT_NUMPAD_ACCESSORY_ID}
               />
             </Pressable>
 
@@ -265,7 +317,7 @@ export function EditTransactionSheet({
               style={[styles.saveBtn, !canSubmit && styles.saveDisabled]}
               disabled={!canSubmit}
               onPress={handleSaveOnly}>
-              <Text style={styles.saveText}>Save only this</Text>
+              <Text style={styles.saveText}>{isSeries ? 'Save only this' : 'Save'}</Text>
             </Pressable>
 
             {isSeries && (
@@ -290,8 +342,22 @@ export function EditTransactionSheet({
               )}
             </View>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </Animated.View>
+      </View>
+
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={EDIT_NUMPAD_ACCESSORY_ID}>
+          <View style={styles.kbAccessory}>
+            <Pressable
+              onPress={() => Keyboard.dismiss()}
+              hitSlop={10}
+              style={styles.kbAccessoryBtn}>
+              <Ionicons name="checkmark" size={22} color={Palette.brand} />
+              <Text style={styles.kbAccessoryText}>Done</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      )}
     </Modal>
   );
 }

@@ -4,6 +4,8 @@ export type Category = {
 	id: string;
 	name: string;
 	color: string;
+	weeklyBudgetCents: number | null;
+	monthlyOverrideCents: number | null;
 };
 
 export type RepeatPeriod = "weeks" | "months";
@@ -37,11 +39,11 @@ export type Transaction = {
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [
-	{ id: "food", name: "Food", color: "#ef4444" },
-	{ id: "gas", name: "Gas", color: "#f59e0b" },
-	{ id: "fun", name: "Fun", color: "#a855f7" },
-	{ id: "bills", name: "Bills", color: "#3b82f6" },
-	{ id: "work", name: "Work", color: "#10b981" },
+	{ id: "food", name: "Food", color: "#ef4444", weeklyBudgetCents: null, monthlyOverrideCents: null },
+	{ id: "gas", name: "Gas", color: "#f59e0b", weeklyBudgetCents: null, monthlyOverrideCents: null },
+	{ id: "fun", name: "Fun", color: "#a855f7", weeklyBudgetCents: null, monthlyOverrideCents: null },
+	{ id: "bills", name: "Bills", color: "#3b82f6", weeklyBudgetCents: null, monthlyOverrideCents: null },
+	{ id: "work", name: "Work", color: "#10b981", weeklyBudgetCents: null, monthlyOverrideCents: null },
 ];
 
 export const MODE_LABELS: Record<TransactionMode, string> = {
@@ -118,7 +120,24 @@ function generateId(prefix: string): string {
 }
 
 export function createCategory(name: string, color: string): Category {
-	return { id: generateId("cat"), name: name.trim(), color };
+	return {
+		id: generateId("cat"),
+		name: name.trim(),
+		color,
+		weeklyBudgetCents: null,
+		monthlyOverrideCents: null,
+	};
+}
+
+export function effectiveMonthlyBudgetCents(cat: Category): number {
+	if (cat.monthlyOverrideCents != null) return cat.monthlyOverrideCents;
+	if (cat.weeklyBudgetCents == null) return 0;
+	return cat.weeklyBudgetCents * 4;
+}
+
+export function effectiveBudgetCents(cat: Category, window: "week" | "month"): number {
+	if (window === "week") return cat.weeklyBudgetCents ?? 0;
+	return effectiveMonthlyBudgetCents(cat);
 }
 
 export function isCategoryNameValid(name: string, existing: Category[]): boolean {

@@ -16,6 +16,8 @@ import {
   formatCentsDisplay,
   Transaction,
 } from '@/components/add-transaction-card.presenter';
+import { BudgetCard } from '@/components/budget-card';
+import { BudgetEditorSheet } from '@/components/budget-editor-sheet';
 import { chartStyles } from '@/components/charts/charts.styles';
 import { LineChart, LinePoint } from '@/components/charts/line-chart';
 import { PieChart, PieSlice } from '@/components/charts/pie-chart';
@@ -44,6 +46,7 @@ export default function OverviewScreen() {
 
   const [pieFilter, setPieFilter] = useState<PieFilter>({ kind: 'days30' });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
 
   const lineData = useMemo(() => buildFutureCashflow(transactions), [transactions]);
   const pieData = useMemo(
@@ -69,6 +72,8 @@ export default function OverviewScreen() {
             Where your money goes — past and projected.
           </Text>
         </View>
+
+        <BudgetCard onOpenEditor={() => setBudgetEditorOpen(true)} />
 
         <View style={chartStyles.container}>
           <Text style={chartStyles.title}>Projected balance</Text>
@@ -162,6 +167,11 @@ export default function OverviewScreen() {
           setFilterOpen(false);
         }}
         onClose={() => setFilterOpen(false)}
+      />
+
+      <BudgetEditorSheet
+        visible={budgetEditorOpen}
+        onClose={() => setBudgetEditorOpen(false)}
       />
     </SafeAreaView>
   );

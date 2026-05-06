@@ -1,5 +1,18 @@
 import { Transaction } from '@/components/add-transaction-card.presenter';
 
+export type SampleBudget = {
+  categoryId: string;
+  weeklyCents: number | null;
+  monthlyOverrideCents: number | null;
+};
+
+export const SAMPLE_CATEGORY_BUDGETS: SampleBudget[] = [
+  { categoryId: 'food', weeklyCents: 8000, monthlyOverrideCents: null },
+  { categoryId: 'gas', weeklyCents: 6000, monthlyOverrideCents: null },
+  { categoryId: 'fun', weeklyCents: 4000, monthlyOverrideCents: null },
+  { categoryId: 'bills', weeklyCents: null, monthlyOverrideCents: 170000 },
+];
+
 function makeId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }

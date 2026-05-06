@@ -3,10 +3,12 @@ import { StyleSheet } from 'react-native';
 import { Palette } from '@/constants/colors';
 
 export const editStyles = StyleSheet.create({
+  modalRoot: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'transparent',
   },
   sheet: {
     backgroundColor: Palette.cardBackground,
@@ -17,6 +19,9 @@ export const editStyles = StyleSheet.create({
     paddingBottom: 24,
     gap: 12,
     maxHeight: '92%',
+  },
+  dragHandleArea: {
+    paddingTop: 4,
   },
   grabber: {
     alignSelf: 'center',
@@ -218,5 +223,26 @@ export const editStyles = StyleSheet.create({
     color: Palette.spent,
     fontSize: 15,
     fontWeight: '700',
+  },
+  kbAccessory: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    backgroundColor: Palette.toggleTrack,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Palette.border,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  kbAccessoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  kbAccessoryText: {
+    fontSize: 16,
+    color: Palette.brand,
+    fontWeight: '600',
   },
 });

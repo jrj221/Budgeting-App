@@ -109,6 +109,18 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 
 export const DEFAULT_COLOR_SCHEME_ID = 'default';
 
+export function paleColor(hex: string, blend = 0.82): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return '#f1f3f5';
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  const mix = (c: number) => Math.round(c + (255 - c) * blend);
+  const out = (mix(r) << 16) | (mix(g) << 8) | mix(b);
+  return `#${out.toString(16).padStart(6, '0')}`;
+}
+
 export const ModeColors: Record<TransactionMode, string> = {
   spent: Palette.spent,
   earned: Palette.earned,

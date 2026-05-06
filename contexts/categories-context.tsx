@@ -12,6 +12,12 @@ type CategoriesContextValue = {
   categories: Category[];
   addCategory: (name: string) => Category | null;
   deleteCategory: (id: string) => void;
+  renameCategory: (id: string, name: string) => void;
+  setCategoryBudget: (
+    id: string,
+    weeklyCents: number | null,
+    monthlyOverrideCents: number | null,
+  ) => void;
   getCategory: (id: string | null) => Category | null;
 };
 
@@ -35,14 +41,46 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     setCategories((existing) => existing.filter((c) => c.id !== id));
   }, []);
 
+  const renameCategory = useCallback((id: string, name: string) => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return;
+    setCategories((existing) =>
+      existing.map((c) => (c.id === id ? { ...c, name: trimmed } : c)),
+    );
+  }, []);
+
+  const setCategoryBudget = useCallback(
+    (id: string, weeklyCents: number | null, monthlyOverrideCents: number | null) => {
+      setCategories((existing) =>
+        existing.map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                weeklyBudgetCents: weeklyCents,
+                monthlyOverrideCents,
+              }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
   const getCategory = useCallback(
     (id: string | null) => (id ? categories.find((c) => c.id === id) ?? null : null),
     [categories],
   );
 
   const value = useMemo(
-    () => ({ categories, addCategory, deleteCategory, getCategory }),
-    [categories, addCategory, deleteCategory, getCategory],
+    () => ({
+      categories,
+      addCategory,
+      deleteCategory,
+      renameCategory,
+      setCategoryBudget,
+      getCategory,
+    }),
+    [categories, addCategory, deleteCategory, renameCategory, setCategoryBudget, getCategory],
   );
 
   return <CategoriesContext.Provider value={value}>{children}</CategoriesContext.Provider>;

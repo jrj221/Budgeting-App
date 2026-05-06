@@ -4,16 +4,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { styles } from '@/app/(tabs)/settings.styles';
 import { Palette } from '@/constants/colors';
+import { useCategories } from '@/contexts/categories-context';
+import { useOnboarding } from '@/contexts/onboarding-context';
 import { useAppTheme } from '@/contexts/theme-context';
 import { useTransactions } from '@/contexts/transactions-context';
-import { generateSampleTransactions } from '@/utils/sample-transactions';
+import {
+  generateSampleTransactions,
+  SAMPLE_CATEGORY_BUDGETS,
+} from '@/utils/sample-transactions';
 
 export default function SettingsScreen() {
   const { scheme: current, schemes, setSchemeId } = useAppTheme();
   const { transactions, addTransactions, clearAll } = useTransactions();
+  const { setCategoryBudget } = useCategories();
+  const { resetWelcome } = useOnboarding();
 
   const onLoadSample = () => {
     addTransactions(generateSampleTransactions());
+    for (const b of SAMPLE_CATEGORY_BUDGETS) {
+      setCategoryBudget(b.categoryId, b.weeklyCents, b.monthlyOverrideCents);
+    }
   };
 
   const onClearAll = () => {
@@ -24,6 +34,24 @@ export default function SettingsScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Clear all', style: 'destructive', onPress: () => clearAll() },
+      ],
+    );
+  };
+
+  const onResetBudget = () => {
+    Alert.alert(
+      'Reset budget?',
+      'This clears every transaction and brings you back to the welcome screen so you can pick a new starting balance.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            clearAll();
+            await resetWelcome();
+          },
+        },
       ],
     );
   };
@@ -86,6 +114,21 @@ export default function SettingsScreen() {
               Clear all transactions
             </Text>
             <Text style={styles.actionMeta}>{transactions.length} stored</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Start fresh</Text>
+          <Text style={styles.sectionSubtitle}>
+            Reset everything and pick a new starting balance from the welcome screen.
+          </Text>
+          <Pressable
+            onPress={onResetBudget}
+            style={[styles.actionRow, styles.actionRowLast]}>
+            <Ionicons name="refresh-outline" size={20} color={Palette.spent} />
+            <Text style={[styles.actionText, { color: Palette.spent }]}>
+              Reset budget
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
