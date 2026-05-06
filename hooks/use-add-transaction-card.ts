@@ -1,30 +1,37 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import {
-  buildTransaction,
-  Category,
-  createCategory,
-  DEFAULT_CATEGORIES,
+  buildTransactionSeries,
   DraftTransaction,
-  isCategoryNameValid,
   isDraftSubmittable,
   makeInitialDraft,
+  makeInitialRepeatConfig,
+  RepeatConfig,
+  RepeatEndMode,
+  RepeatPeriod,
   sanitizeAmountDigits,
   Transaction,
   TransactionMode,
 } from '@/components/add-transaction-card.presenter';
+import { useCategories } from '@/contexts/categories-context';
 
 export type UseAddTransactionCardOptions = {
-  onSubmit?: (transaction: Transaction) => void;
+  onSubmit?: (transactions: Transaction[]) => void;
 };
 
 export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}) {
   const { onSubmit } = options;
+  const {
+    categories,
+    addCategory: addCategoryToStore,
+    deleteCategory: deleteCategoryFromStore,
+  } = useCategories();
 
   const [draft, setDraft] = useState<DraftTransaction>(makeInitialDraft);
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [repeat, setRepeat] = useState<RepeatConfig>(() => makeInitialRepeatConfig());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
+  const [isRepeatSheetOpen, setIsRepeatSheetOpen] = useState(false);
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -72,36 +79,64 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
   }, []);
 
   const addCategory = useCallback(() => {
-    let added = false;
-    setCategories((existing) => {
-      if (!isCategoryNameValid(newCategoryName, existing)) return existing;
-      added = true;
-      return [...existing, createCategory(newCategoryName)];
-    });
-    if (added) setNewCategoryName('');
-  }, [newCategoryName]);
+    const created = addCategoryToStore(newCategoryName);
+    if (created) setNewCategoryName('');
+  }, [addCategoryToStore, newCategoryName]);
 
-  const deleteCategory = useCallback((id: string) => {
-    setCategories((existing) => existing.filter((c) => c.id !== id));
-    setDraft((d) => (d.categoryId === id ? { ...d, categoryId: null } : d));
+  const deleteCategory = useCallback(
+    (id: string) => {
+      deleteCategoryFromStore(id);
+      setDraft((d) => (d.categoryId === id ? { ...d, categoryId: null } : d));
+    },
+    [deleteCategoryFromStore],
+  );
+
+  const openRepeatSheet = useCallback(() => setIsRepeatSheetOpen(true), []);
+  const closeRepeatSheet = useCallback(() => setIsRepeatSheetOpen(false), []);
+
+  const setRepeatEnabled = useCallback((enabled: boolean) => {
+    setRepeat((r) => ({ ...r, enabled }));
+  }, []);
+
+  const setRepeatEvery = useCallback((every: number) => {
+    setRepeat((r) => ({ ...r, every: Math.max(1, Math.floor(every || 1)) }));
+  }, []);
+
+  const setRepeatPeriod = useCallback((period: RepeatPeriod) => {
+    setRepeat((r) => ({ ...r, period }));
+  }, []);
+
+  const setRepeatEndMode = useCallback((endMode: RepeatEndMode) => {
+    setRepeat((r) => ({ ...r, endMode }));
+  }, []);
+
+  const setRepeatEndDate = useCallback((endDate: Date) => {
+    setRepeat((r) => ({ ...r, endDate }));
+  }, []);
+
+  const setRepeatCount = useCallback((count: number) => {
+    setRepeat((r) => ({ ...r, count: Math.max(1, Math.floor(count || 1)) }));
   }, []);
 
   const canSubmit = useMemo(() => isDraftSubmittable(draft), [draft]);
 
   const submit = useCallback(() => {
     if (!isDraftSubmittable(draft)) return;
-    const tx = buildTransaction(draft);
-    onSubmit?.(tx);
+    const series = buildTransactionSeries(draft, repeat);
+    onSubmit?.(series);
     setDraft({ ...makeInitialDraft(), mode: draft.mode });
+    setRepeat(makeInitialRepeatConfig());
     setIsDatePickerOpen(false);
-  }, [draft, onSubmit]);
+  }, [draft, repeat, onSubmit]);
 
   return {
     draft,
+    repeat,
     categories,
     selectedCategory,
     isDatePickerOpen,
     isCategorySheetOpen,
+    isRepeatSheetOpen,
     isEditingCategories,
     newCategoryName,
     canSubmit,
@@ -117,6 +152,14 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     addCategory,
     deleteCategory,
     setNewCategoryName,
+    openRepeatSheet,
+    closeRepeatSheet,
+    setRepeatEnabled,
+    setRepeatEvery,
+    setRepeatPeriod,
+    setRepeatEndMode,
+    setRepeatEndDate,
+    setRepeatCount,
     submit,
   };
 }

@@ -4,6 +4,9 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
+import { CategoriesProvider } from '@/contexts/categories-context';
+import { AppThemeProvider } from '@/contexts/theme-context';
+import { TransactionsProvider } from '@/contexts/transactions-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -16,10 +19,16 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="auto" />
+        <AppThemeProvider>
+          <CategoriesProvider>
+            <TransactionsProvider>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              </Stack>
+              <StatusBar style="auto" />
+            </TransactionsProvider>
+          </CategoriesProvider>
+        </AppThemeProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

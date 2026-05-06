@@ -1,44 +1,29 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddTransactionCard } from '@/components/add-transaction-card';
+import { styles } from '@/app/(tabs)/index.styles';
+import { useAppTheme } from '@/contexts/theme-context';
+import { useTransactions } from '@/contexts/transactions-context';
 
 export default function HomeScreen() {
+  const { addTransactions } = useTransactions();
+  const { scheme } = useAppTheme();
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: scheme.background }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Add Transaction</Text>
-          <Text style={styles.subtitle}>Track what you spent or earned.</Text>
+          <Text style={[styles.title, { color: scheme.text }]}>Add Transaction</Text>
+          <Text style={[styles.subtitle, { color: scheme.textMuted }]}>
+            Track what you spent or earned.
+          </Text>
         </View>
-        <AddTransactionCard onSubmit={() => {}} />
+        <AddTransactionCard onSubmit={addTransactions} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#f5f7fa',
-  },
-  scroll: {
-    padding: 20,
-    gap: 16,
-  },
-  header: {
-    gap: 4,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#11181C',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#687076',
-  },
-});

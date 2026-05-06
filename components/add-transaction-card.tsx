@@ -1,12 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { StyleProp, TextStyle } from "react-native";
 import {
+	InputAccessoryView,
 	Keyboard,
+	KeyboardAvoidingView,
 	Modal,
+	Platform,
 	Pressable,
 	ScrollView,
-	StyleSheet,
+	Switch,
 	Text,
 	TextInput,
 	useWindowDimensions,
@@ -19,29 +23,25 @@ import {
 	Category,
 	formatAmountDisplay,
 	formatDateLabel,
+	formatRepeatSummary,
 	MODE_LABELS,
+	REPEAT_PERIOD_LABELS,
+	RepeatConfig,
+	RepeatEndMode,
+	RepeatPeriod,
 	submitButtonLabel,
 	Transaction,
 	TransactionMode,
 } from "@/components/add-transaction-card.presenter";
+import { styles } from "@/components/add-transaction-card.styles";
+import { ModeColors, Palette } from "@/constants/colors";
 import { useAddTransactionCard } from "@/hooks/use-add-transaction-card";
 
-const VENMO_BLUE = "#3D95CE";
-const SPENT_RED = "#e53935";
-const EARNED_GREEN = "#22a06b";
-const MUTED = "#9aa0a6";
-const SURFACE = "#f7f8fa";
-const BORDER = "#e6e8eb";
-const TEXT = "#11181C";
-
-const MODE_COLORS: Record<TransactionMode, string> = {
-	spent: SPENT_RED,
-	earned: EARNED_GREEN,
-};
-
 export type AddTransactionCardProps = {
-	onSubmit?: (transaction: Transaction) => void;
+	onSubmit?: (transactions: Transaction[]) => void;
 };
+
+const NUMPAD_ACCESSORY_ID = "number-pad-done";
 
 export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 	const presenter = useAddTransactionCard({ onSubmit });
@@ -63,13 +63,14 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 					style={styles.hiddenInput}
 					caretHidden
 					maxLength={9}
+					inputAccessoryViewID={NUMPAD_ACCESSORY_ID}
 				/>
 			</Pressable>
 
 			<TextInput
 				style={styles.titleInput}
 				placeholder="What's it for?"
-				placeholderTextColor={MUTED}
+				placeholderTextColor={Palette.iconMuted}
 				value={presenter.draft.title}
 				onChangeText={presenter.setTitle}
 				returnKeyType="done"
@@ -83,7 +84,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				}}
 			>
 				<View style={styles.rowLeft}>
-					<Ionicons name="calendar-outline" size={20} color={TEXT} />
+					<Ionicons name="calendar-outline" size={20} color={Palette.text} />
 					<Text style={styles.rowLabel}>Date</Text>
 				</View>
 				<View style={styles.rowRight}>
@@ -91,7 +92,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 					<Ionicons
 						name={presenter.isDatePickerOpen ? "chevron-up" : "chevron-down"}
 						size={18}
-						color={MUTED}
+						color={Palette.iconMuted}
 					/>
 				</View>
 			</Pressable>
@@ -102,7 +103,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 						mode="date"
 						display="spinner"
 						themeVariant="light"
-						textColor={TEXT}
+						textColor={Palette.text}
 						onChange={(_, d) => {
 							if (d) presenter.setDate(d);
 						}}
@@ -118,14 +119,33 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				}}
 			>
 				<View style={styles.rowLeft}>
-					<Ionicons name="pricetag-outline" size={20} color={TEXT} />
+					<Ionicons name="pricetag-outline" size={20} color={Palette.text} />
 					<Text style={styles.rowLabel}>Category</Text>
 				</View>
 				<View style={styles.rowRight}>
 					<Text style={[styles.rowValue, !presenter.selectedCategory && styles.rowValueMuted]}>
 						{presenter.selectedCategory?.name ?? "None"}
 					</Text>
-					<Ionicons name="chevron-forward" size={18} color={MUTED} />
+					<Ionicons name="chevron-forward" size={18} color={Palette.iconMuted} />
+				</View>
+			</Pressable>
+
+			<Pressable
+				style={styles.row}
+				onPress={() => {
+					Keyboard.dismiss();
+					presenter.openRepeatSheet();
+				}}
+			>
+				<View style={styles.rowLeft}>
+					<Ionicons name="repeat" size={20} color={Palette.text} />
+					<Text style={styles.rowLabel}>Repeat</Text>
+				</View>
+				<View style={styles.rowRight}>
+					<Text style={[styles.rowValue, !presenter.repeat.enabled && styles.rowValueMuted]}>
+						{presenter.repeat.enabled ? formatRepeatSummary(presenter.repeat) : "Never"}
+					</Text>
+					<Ionicons name="chevron-forward" size={18} color={Palette.iconMuted} />
 				</View>
 			</Pressable>
 
@@ -153,6 +173,29 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				onChangeNewName={presenter.setNewCategoryName}
 				onAdd={presenter.addCategory}
 			/>
+
+			<RepeatSheet
+				visible={presenter.isRepeatSheetOpen}
+				repeat={presenter.repeat}
+				onClose={presenter.closeRepeatSheet}
+				onSetEnabled={presenter.setRepeatEnabled}
+				onSetEvery={presenter.setRepeatEvery}
+				onSetPeriod={presenter.setRepeatPeriod}
+				onSetEndMode={presenter.setRepeatEndMode}
+				onSetEndDate={presenter.setRepeatEndDate}
+				onSetCount={presenter.setRepeatCount}
+			/>
+
+			{Platform.OS === "ios" && (
+				<InputAccessoryView nativeID={NUMPAD_ACCESSORY_ID}>
+					<View style={styles.kbAccessory}>
+						<Pressable onPress={() => Keyboard.dismiss()} hitSlop={10} style={styles.kbAccessoryBtn}>
+							<Ionicons name="checkmark" size={22} color={Palette.brand} />
+							<Text style={styles.kbAccessoryText}>Done</Text>
+						</Pressable>
+					</View>
+				</InputAccessoryView>
+			)}
 		</View>
 	);
 }
@@ -169,7 +212,7 @@ function ModeToggle({ mode, onChange }: { mode: TransactionMode; onChange: (m: T
 						style={[
 							styles.toggleBtn,
 							active && styles.toggleBtnActive,
-							active && { backgroundColor: MODE_COLORS[m] },
+							active && { backgroundColor: ModeColors[m] },
 						]}
 						onPress={() => onChange(m)}
 					>
@@ -198,45 +241,14 @@ type CategorySheetProps = {
 function CategorySheet(props: CategorySheetProps) {
 	const { height: windowHeight } = useWindowDimensions();
 	const listMaxHeight = windowHeight * 0.5;
-	const translateY = useSharedValue(0);
-	const baseY = useSharedValue(0);
-
-	useEffect(() => {
-		if (props.visible) {
-			translateY.value = 0;
-			baseY.value = 0;
-		}
-	}, [props.visible, translateY, baseY]);
-
-	const pan = Gesture.Pan()
-		.onUpdate((e) => {
-			translateY.value = baseY.value + e.translationY;
-		})
-		.onEnd((e) => {
-			const finalY = baseY.value + e.translationY;
-			if (finalY > 120 || e.velocityY > 800) {
-				baseY.value = 0;
-				translateY.value = withTiming(0, { duration: 180 });
-				runOnJS(props.onClose)();
-			} else if (finalY < 0) {
-				baseY.value = 0;
-				translateY.value = withTiming(0, { duration: 180 });
-			} else {
-				baseY.value = finalY;
-				translateY.value = finalY;
-			}
-		});
-
-	const sheetStyle = useAnimatedStyle(() => ({
-		transform: [{ translateY: translateY.value }],
-	}));
+	const sheet = useSheetGesture(props.visible, props.onClose);
 
 	return (
 		<Modal visible={props.visible} animationType="slide" transparent onRequestClose={props.onClose}>
 			<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
-				<Animated.View style={[styles.sheet, sheetStyle]}>
+				<Animated.View style={[styles.sheet, sheet.animatedStyle]}>
 					<Pressable onPress={() => {}}>
-						<GestureDetector gesture={pan}>
+						<GestureDetector gesture={sheet.gesture}>
 							<View style={styles.sheetGrabber}>
 								<View style={styles.sheetHandle} />
 								<View style={styles.sheetHeader}>
@@ -251,275 +263,292 @@ function CategorySheet(props: CategorySheetProps) {
 							</View>
 						</GestureDetector>
 
-							<ScrollView
-								style={{ maxHeight: listMaxHeight }}
-								keyboardShouldPersistTaps="handled"
-								showsVerticalScrollIndicator={false}>
-								{!props.isEditing && (
-									<Pressable style={styles.sheetRow} onPress={() => props.onSelect(null)}>
-										<View style={styles.sheetRowSelect}>
-											<Text style={[styles.sheetRowText, styles.sheetRowMuted]}>None</Text>
-											{props.selectedId === null && (
-												<Ionicons name="checkmark" size={20} color={VENMO_BLUE} />
-											)}
-										</View>
-									</Pressable>
-								)}
-
-								{props.categories.map((cat) => (
-									<View key={cat.id} style={styles.sheetRow}>
-										{props.isEditing && (
-											<Pressable
-												onPress={() => props.onDelete(cat.id)}
-												style={styles.deleteBtn}
-												hitSlop={8}
-											>
-												<Ionicons name="remove-circle" size={22} color="#e53935" />
-											</Pressable>
+						<ScrollView
+							style={{ maxHeight: listMaxHeight }}
+							keyboardShouldPersistTaps="handled"
+							showsVerticalScrollIndicator={false}
+						>
+							{!props.isEditing && (
+								<Pressable style={styles.sheetRow} onPress={() => props.onSelect(null)}>
+									<View style={styles.sheetRowSelect}>
+										<Text style={[styles.sheetRowText, styles.sheetRowMuted]}>None</Text>
+										{props.selectedId === null && (
+											<Ionicons name="checkmark" size={20} color={Palette.brand} />
 										)}
-										<Pressable
-											style={styles.sheetRowSelect}
-											onPress={() => !props.isEditing && props.onSelect(cat.id)}
-											disabled={props.isEditing}
-										>
-											<Text style={styles.sheetRowText}>{cat.name}</Text>
-											{props.selectedId === cat.id && !props.isEditing && (
-												<Ionicons name="checkmark" size={20} color={VENMO_BLUE} />
-											)}
-										</Pressable>
 									</View>
-								))}
-							</ScrollView>
+								</Pressable>
+							)}
 
-							{props.isEditing && (
-								<View style={styles.addRow}>
-									<TextInput
-										style={styles.addInput}
-										placeholder="New category name"
-										placeholderTextColor={MUTED}
-										value={props.newName}
-										onChangeText={props.onChangeNewName}
-										returnKeyType="done"
-										onSubmitEditing={props.onAdd}
-									/>
-									<Pressable onPress={props.onAdd} hitSlop={6}>
-										<Ionicons name="add-circle" size={30} color={VENMO_BLUE} />
+							{props.categories.map((cat) => (
+								<View key={cat.id} style={styles.sheetRow}>
+									{props.isEditing && (
+										<Pressable
+											onPress={() => props.onDelete(cat.id)}
+											style={styles.deleteBtn}
+											hitSlop={8}
+										>
+											<Ionicons name="remove-circle" size={22} color={Palette.spent} />
+										</Pressable>
+									)}
+									<Pressable
+										style={styles.sheetRowSelect}
+										onPress={() => !props.isEditing && props.onSelect(cat.id)}
+										disabled={props.isEditing}
+									>
+										<View style={styles.categoryRowLeft}>
+											<View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
+											<Text style={styles.sheetRowText}>{cat.name}</Text>
+										</View>
+										{props.selectedId === cat.id && !props.isEditing && (
+											<Ionicons name="checkmark" size={20} color={Palette.brand} />
+										)}
 									</Pressable>
 								</View>
-							)}
-						</Pressable>
-					</Animated.View>
+							))}
+						</ScrollView>
+
+						{props.isEditing && (
+							<View style={styles.addRow}>
+								<TextInput
+									style={styles.addInput}
+									placeholder="New category name"
+									placeholderTextColor={Palette.iconMuted}
+									value={props.newName}
+									onChangeText={props.onChangeNewName}
+									returnKeyType="done"
+									onSubmitEditing={props.onAdd}
+								/>
+								<Pressable onPress={props.onAdd} hitSlop={6}>
+									<Ionicons name="add-circle" size={30} color={Palette.brand} />
+								</Pressable>
+							</View>
+						)}
+					</Pressable>
+				</Animated.View>
 			</Pressable>
 		</Modal>
 	);
 }
 
-const styles = StyleSheet.create({
-	card: {
-		backgroundColor: "#fff",
-		borderRadius: 24,
-		padding: 20,
-		shadowColor: "#000",
-		shadowOpacity: 0.08,
-		shadowOffset: { width: 0, height: 4 },
-		shadowRadius: 16,
-		elevation: 4,
-		gap: 14,
-	},
-	toggle: {
-		flexDirection: "row",
-		backgroundColor: "#f1f3f5",
-		borderRadius: 999,
-		padding: 4,
-	},
-	toggleBtn: {
-		flex: 1,
-		paddingVertical: 10,
-		alignItems: "center",
-		borderRadius: 999,
-	},
-	toggleBtnActive: {
-		backgroundColor: "#fff",
-		shadowColor: "#000",
-		shadowOpacity: 0.06,
-		shadowOffset: { width: 0, height: 2 },
-		shadowRadius: 4,
-	},
-	toggleText: {
-		fontSize: 15,
-		fontWeight: "600",
-		color: "#777",
-	},
-	toggleTextActive: {
-		color: "#fff",
-	},
-	amountWrap: {
-		alignItems: "center",
-		paddingVertical: 8,
-	},
-	amount: {
-		fontSize: 56,
-		fontWeight: "700",
-		color: TEXT,
-		letterSpacing: -1,
-	},
-	amountMuted: {
-		color: "#c4c8cc",
-	},
-	hiddenInput: {
-		position: "absolute",
-		opacity: 0,
-		height: 1,
-		width: 1,
-	},
-	titleInput: {
-		fontSize: 17,
-		fontWeight: "500",
-		color: TEXT,
-		paddingVertical: 14,
-		paddingHorizontal: 16,
-		backgroundColor: SURFACE,
-		borderRadius: 14,
-	},
-	row: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		paddingVertical: 14,
-		paddingHorizontal: 16,
-		backgroundColor: SURFACE,
-		borderRadius: 14,
-	},
-	rowLeft: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 10,
-	},
-	rowRight: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 6,
-	},
-	rowLabel: {
-		fontSize: 16,
-		fontWeight: "500",
-		color: TEXT,
-	},
-	rowValue: {
-		fontSize: 16,
-		color: TEXT,
-	},
-	rowValueMuted: {
-		color: MUTED,
-	},
-	wheelWrap: {
-		backgroundColor: "#fff",
-		borderRadius: 14,
-		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: BORDER,
-		overflow: "hidden",
-	},
-	submit: {
-		backgroundColor: VENMO_BLUE,
-		paddingVertical: 16,
-		borderRadius: 999,
-		alignItems: "center",
-		marginTop: 4,
-	},
-	submitDisabled: {
-		backgroundColor: "#cfd8dc",
-	},
-	submitText: {
-		color: "#fff",
-		fontSize: 17,
-		fontWeight: "700",
-	},
-	sheetBackdrop: {
-		flex: 1,
-		backgroundColor: "transparent",
-		justifyContent: "flex-end",
-	},
-	sheet: {
-		backgroundColor: "#fff",
-		borderTopLeftRadius: 24,
-		borderTopRightRadius: 24,
-		paddingHorizontal: 20,
-		paddingTop: 8,
-		paddingBottom: 540,
-		marginBottom: -500,
-	},
-	sheetGrabber: {
-		paddingVertical: 4,
-	},
-	sheetHandle: {
-		alignSelf: "center",
-		width: 36,
-		height: 4,
-		borderRadius: 2,
-		backgroundColor: "#d0d4d9",
-		marginBottom: 8,
-	},
-	sheetHeader: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		paddingBottom: 12,
-		borderBottomWidth: StyleSheet.hairlineWidth,
-		borderBottomColor: BORDER,
-		marginBottom: 4,
-	},
-	sheetTitle: {
-		fontSize: 17,
-		fontWeight: "700",
-		color: TEXT,
-	},
-	sheetCancel: {
-		fontSize: 16,
-		color: TEXT,
-	},
-	sheetEdit: {
-		fontSize: 16,
-		color: VENMO_BLUE,
-		fontWeight: "600",
-	},
-	sheetRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		paddingVertical: 14,
-		gap: 12,
-	},
-	sheetRowSelect: {
-		flex: 1,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "space-between",
-	},
-	sheetRowText: {
-		fontSize: 17,
-		color: TEXT,
-	},
-	sheetRowMuted: {
-		color: MUTED,
-	},
-	deleteBtn: {
-		paddingHorizontal: 2,
-	},
-	addRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 10,
-		paddingVertical: 12,
-		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: BORDER,
-		marginTop: 4,
-	},
-	addInput: {
-		flex: 1,
-		backgroundColor: SURFACE,
-		borderRadius: 10,
-		paddingHorizontal: 12,
-		paddingVertical: 10,
-		fontSize: 16,
-		color: TEXT,
-	},
-});
+type RepeatSheetProps = {
+	visible: boolean;
+	repeat: RepeatConfig;
+	onClose: () => void;
+	onSetEnabled: (enabled: boolean) => void;
+	onSetEvery: (every: number) => void;
+	onSetPeriod: (period: RepeatPeriod) => void;
+	onSetEndMode: (mode: RepeatEndMode) => void;
+	onSetEndDate: (date: Date) => void;
+	onSetCount: (count: number) => void;
+};
+
+function RepeatSheet(props: RepeatSheetProps) {
+	const sheet = useSheetGesture(props.visible, props.onClose);
+	const periodOptions: RepeatPeriod[] = ["weeks", "months"];
+	const endModeOptions: RepeatEndMode[] = ["date", "count"];
+	const periodLabel = (p: RepeatPeriod) =>
+		props.repeat.every === 1 ? REPEAT_PERIOD_LABELS[p].singular : REPEAT_PERIOD_LABELS[p].plural;
+
+	return (
+		<Modal visible={props.visible} animationType="slide" transparent onRequestClose={props.onClose}>
+			<KeyboardAvoidingView
+				style={{ flex: 1 }}
+				behavior={Platform.OS === "ios" ? "padding" : undefined}
+			>
+				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
+					<Animated.View style={[styles.sheet, sheet.animatedStyle]}>
+						<Pressable onPress={() => {}}>
+							<GestureDetector gesture={sheet.gesture}>
+								<View style={styles.sheetGrabber}>
+									<View style={styles.sheetHandle} />
+									<View style={styles.sheetHeader}>
+										<Pressable onPress={props.onClose} hitSlop={10}>
+											<Text style={styles.sheetCancel}>Cancel</Text>
+										</Pressable>
+										<Text style={styles.sheetTitle}>Repeat</Text>
+										<View style={styles.sheetHeaderSpacer} />
+									</View>
+								</View>
+							</GestureDetector>
+
+							<View style={styles.repeatBody}>
+								<View style={styles.repeatToggleRow}>
+									<View style={styles.rowLeft}>
+										<Ionicons name="repeat" size={20} color={Palette.text} />
+										<Text style={styles.rowLabel}>Repeat this transaction</Text>
+									</View>
+									<Switch
+										value={props.repeat.enabled}
+										onValueChange={props.onSetEnabled}
+										trackColor={{ false: Palette.switchTrackOff, true: Palette.brand }}
+										ios_backgroundColor={Palette.switchTrackOff}
+									/>
+								</View>
+
+							{props.repeat.enabled && (
+								<>
+									<View style={styles.repeatEveryRow}>
+										<Text style={styles.repeatEveryLabel}>Every</Text>
+										<NumberField
+											style={styles.repeatNumberInput}
+											value={props.repeat.every}
+											onCommit={props.onSetEvery}
+											maxLength={3}
+										/>
+										<View style={styles.periodToggle}>
+											{periodOptions.map((p) => {
+												const active = props.repeat.period === p;
+												return (
+													<Pressable
+														key={p}
+														onPress={() => props.onSetPeriod(p)}
+														style={[styles.periodBtn, active && styles.periodBtnActive]}
+													>
+														<Text
+															style={[
+																styles.periodText,
+																active && styles.periodTextActive,
+															]}
+														>
+															{periodLabel(p)}
+														</Text>
+													</Pressable>
+												);
+											})}
+										</View>
+									</View>
+
+									<View style={styles.endModeToggle}>
+										{endModeOptions.map((m) => {
+											const active = props.repeat.endMode === m;
+											return (
+												<Pressable
+													key={m}
+													onPress={() => props.onSetEndMode(m)}
+													style={[styles.endModeBtn, active && styles.endModeBtnActive]}
+												>
+													<Text
+														style={[styles.endModeText, active && styles.endModeTextActive]}
+													>
+														{m === "date" ? "Until date" : "After N times"}
+													</Text>
+												</Pressable>
+											);
+										})}
+									</View>
+
+									{props.repeat.endMode === "date" ? (
+										<View style={styles.wheelWrap}>
+											<DateTimePicker
+												value={props.repeat.endDate}
+												mode="date"
+												display="spinner"
+												themeVariant="light"
+												textColor={Palette.text}
+												onChange={(_, d) => {
+													if (d) props.onSetEndDate(d);
+												}}
+											/>
+										</View>
+									) : (
+										<View style={styles.row}>
+											<Text style={styles.rowLabel}>Number of occurrences</Text>
+											<NumberField
+												style={styles.repeatNumberInput}
+												value={props.repeat.count}
+												onCommit={props.onSetCount}
+												maxLength={3}
+											/>
+										</View>
+									)}
+
+									<Text style={styles.repeatSummary}>{formatRepeatSummary(props.repeat)}</Text>
+								</>
+							)}
+						</View>
+					</Pressable>
+				</Animated.View>
+			</Pressable>
+			</KeyboardAvoidingView>
+		</Modal>
+	);
+}
+
+
+function NumberField({
+	value,
+	onCommit,
+	style,
+	maxLength,
+}: {
+	value: number;
+	onCommit: (n: number) => void;
+	style?: StyleProp<TextStyle>;
+	maxLength?: number;
+}) {
+	const [draft, setDraft] = useState(String(value));
+	useEffect(() => {
+		setDraft(String(value));
+	}, [value]);
+	return (
+		<TextInput
+			style={style}
+			keyboardType="number-pad"
+			maxLength={maxLength}
+			inputAccessoryViewID={NUMPAD_ACCESSORY_ID}
+			value={draft}
+			onChangeText={(v) => {
+				const cleaned = v.replace(/\D/g, "");
+				setDraft(cleaned);
+				if (cleaned !== "") {
+					const n = parseInt(cleaned, 10);
+					if (Number.isFinite(n) && n >= 1) onCommit(n);
+				}
+			}}
+			onBlur={() => {
+				const n = parseInt(draft, 10);
+				if (draft === "" || !Number.isFinite(n) || n < 1) {
+					setDraft("1");
+					onCommit(1);
+				}
+			}}
+		/>
+	);
+}
+
+function useSheetGesture(visible: boolean, onClose: () => void) {
+	const translateY = useSharedValue(0);
+	const baseY = useSharedValue(0);
+
+	useEffect(() => {
+		if (visible) {
+			translateY.value = 0;
+			baseY.value = 0;
+		}
+	}, [visible, translateY, baseY]);
+
+	const gesture = Gesture.Pan()
+		.onUpdate((e) => {
+			translateY.value = baseY.value + e.translationY;
+		})
+		.onEnd((e) => {
+			const finalY = baseY.value + e.translationY;
+			if (finalY > 120 || e.velocityY > 800) {
+				baseY.value = 0;
+				translateY.value = withTiming(0, { duration: 300 });
+				runOnJS(onClose)();
+			} else if (finalY < 0) {
+				baseY.value = 0;
+				translateY.value = withTiming(0, { duration: 300 });
+			} else {
+				baseY.value = finalY;
+				translateY.value = finalY;
+			}
+		});
+
+	const animatedStyle = useAnimatedStyle(() => ({
+		transform: [{ translateY: translateY.value }],
+	}));
+
+	return { gesture, animatedStyle };
+}
