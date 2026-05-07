@@ -163,6 +163,22 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  startBtnSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.brand,
+    marginTop: 4,
+  },
+  startTextSecondary: {
+    color: Palette.brand,
+    fontSize: 14,
+    fontWeight: '700',
+  },
   skipBtn: {
     paddingVertical: 6,
     alignItems: 'center',

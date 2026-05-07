@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
   InputAccessoryView,
@@ -18,6 +19,7 @@ import {
   sanitizeAmountDigits,
   Transaction,
 } from '@/components/add-transaction-card.presenter';
+import { BudgetEditorSheet } from '@/components/budget-editor-sheet';
 import { styles } from '@/components/welcome-screen.styles';
 import { Palette } from '@/constants/colors';
 import { useOnboarding } from '@/contexts/onboarding-context';
@@ -52,7 +54,16 @@ export function WelcomeScreen() {
   const { startTour } = useTour();
 
   const [amountDigits, setAmountDigits] = useState('');
+  const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const focusBalance = () => {
+    inputRef.current?.focus();
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 80);
+  };
 
   const submit = async (withTour: boolean) => {
     const cents = parseInt(amountDigits || '0', 10);
@@ -73,7 +84,10 @@ export function WelcomeScreen() {
     }
     Keyboard.dismiss();
     await markWelcomeSeen();
-    if (withTour) startTour();
+    if (withTour) {
+      router.replace('/');
+      startTour();
+    }
   };
 
   return (
@@ -85,6 +99,7 @@ export function WelcomeScreen() {
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView
+            ref={scrollRef}
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
@@ -148,10 +163,24 @@ export function WelcomeScreen() {
             </View>
 
             <View style={styles.card}>
+              <Text style={styles.cardLabel}>Set a budget (optional)</Text>
+              <Text style={styles.cardHint}>
+                Pick how much you want to spend per category each week. You can also do this
+                later from Overview.
+              </Text>
+              <Pressable
+                style={styles.startBtnSecondary}
+                onPress={() => setBudgetEditorOpen(true)}>
+                <Ionicons name="wallet-outline" size={18} color={Palette.brand} />
+                <Text style={styles.startTextSecondary}>Open budget editor</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.card}>
               <Text style={styles.cardLabel}>Starting balance</Text>
               <Pressable
                 style={styles.balanceAmountWrap}
-                onPress={() => inputRef.current?.focus()}>
+                onPress={focusBalance}>
                 <Text
                   style={[
                     styles.balanceAmount,
@@ -200,6 +229,11 @@ export function WelcomeScreen() {
             </View>
           </InputAccessoryView>
         )}
+
+        <BudgetEditorSheet
+          visible={budgetEditorOpen}
+          onClose={() => setBudgetEditorOpen(false)}
+        />
       </SafeAreaView>
     </SafeAreaProvider>
   );

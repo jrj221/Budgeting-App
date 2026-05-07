@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BudgetEditorSheet } from '@/components/budget-editor-sheet';
 import { tourStyles as styles } from '@/components/tour-overlay.styles';
 import { TOUR_STEPS, useTour } from '@/contexts/tour-context';
 
@@ -28,10 +27,6 @@ export function TourOverlay() {
   }, [pathname, step, advance]);
 
   if (!step) return null;
-
-  if (step.kind === 'budget-setup') {
-    return <BudgetEditorSheet visible onClose={advance} tourMode onSkip={skip} />;
-  }
 
   const tabBarTotalH = TAB_BAR_CONTENT_HEIGHT + insets.bottom;
   const tabBarTop = height - tabBarTotalH;

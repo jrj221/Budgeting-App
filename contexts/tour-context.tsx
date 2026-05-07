@@ -2,8 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useMemo, useState } 
 
 export type TourStep =
   | { kind: 'info'; title: string; body: string; tabIndex: number }
-  | { kind: 'tap-tab'; title: string; body: string; tabIndex: number; expectedPath: string }
-  | { kind: 'budget-setup'; title: string; body: string };
+  | { kind: 'tap-tab'; title: string; body: string; tabIndex: number; expectedPath: string };
 
 export const TOUR_STEPS: TourStep[] = [
   {
@@ -11,11 +10,6 @@ export const TOUR_STEPS: TourStep[] = [
     title: "You're on Home",
     body: 'This is where you add a transaction — tap the amount, name it, set a category and a date.',
     tabIndex: 0,
-  },
-  {
-    kind: 'budget-setup',
-    title: 'Set a weekly budget',
-    body: 'Pick how much you want to spend per category. Monthly defaults to weekly × 4 — toggle to manual to set it yourself.',
   },
   {
     kind: 'tap-tab',
