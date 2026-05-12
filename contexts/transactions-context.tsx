@@ -1,11 +1,14 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { Transaction } from '@/components/add-transaction-card.presenter';
+import { STORAGE_KEYS } from '@/storage/keys';
 
 type TransactionPatch = Partial<Pick<Transaction, 'mode' | 'amountCents' | 'title' | 'date' | 'categoryId'>>;
 
 type TransactionsContextValue = {
   transactions: Transaction[];
+  hydrated: boolean;
   addTransactions: (txs: Transaction[]) => void;
   updateTransaction: (id: string, patch: TransactionPatch) => void;
   updateTransactionAndFuture: (id: string, patch: TransactionPatch) => void;
@@ -19,6 +22,45 @@ const TransactionsContext = createContext<TransactionsContextValue | null>(null)
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate from storage on mount
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEYS.TRANSACTIONS)
+      .then((raw) => {
+        if (cancelled) return;
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as Transaction[];
+            // Forward-compat: fill in any missing fields
+            const safe = parsed.map((tx) => ({
+              id: tx.id ?? '',
+              seriesId: tx.seriesId ?? null,
+              mode: tx.mode ?? 'spent',
+              amountCents: tx.amountCents ?? 0,
+              title: tx.title ?? '',
+              date: tx.date ?? new Date().toISOString(),
+              categoryId: tx.categoryId ?? null,
+            }));
+            setTransactions(safe);
+          } catch {
+            // corrupt data — start fresh
+          }
+        }
+        setHydrated(true);
+      })
+      .catch(() => {
+        if (!cancelled) setHydrated(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Persist on every state change (only after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions)).catch(() => {});
+  }, [transactions, hydrated]);
 
   const addTransactions = useCallback((txs: Transaction[]) => {
     if (txs.length === 0) return;
@@ -85,6 +127,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       transactions,
+      hydrated,
       addTransactions,
       updateTransaction,
       updateTransactionAndFuture,
@@ -95,6 +138,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }),
     [
       transactions,
+      hydrated,
       addTransactions,
       updateTransaction,
       updateTransactionAndFuture,

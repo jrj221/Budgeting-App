@@ -1,8 +1,10 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { Transaction } from '@/components/add-transaction-card.presenter';
 import { useCategories } from '@/contexts/categories-context';
 import { useTransactions } from '@/contexts/transactions-context';
+import { STORAGE_KEYS } from '@/storage/keys';
 import { computeGoalDerived, Goal, GoalDraft } from '@/utils/goal-calc';
 
 function generateId(prefix: string): string {
@@ -11,6 +13,7 @@ function generateId(prefix: string): string {
 
 type GoalsContextValue = {
   goals: Goal[];
+  hydrated: boolean;
   addGoal: (draft: GoalDraft) => Goal | null;
   updateGoal: (id: string, draft: GoalDraft) => Goal | null;
   deleteGoal: (id: string) => void;
@@ -25,8 +28,48 @@ const GoalsContext = createContext<GoalsContextValue | null>(null);
 
 export function GoalsProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const { addCategory, deleteCategory, renameCategory, setCategoryColor } = useCategories();
   const { addTransactions, transactions } = useTransactions();
+
+  // Hydrate from storage on mount
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEYS.GOALS)
+      .then((raw) => {
+        if (cancelled) return;
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as Goal[];
+            // Forward-compat: fill in any missing fields
+            const safe = parsed.map((g) => ({
+              id: g.id ?? '',
+              name: g.name ?? '',
+              targetCents: g.targetCents ?? 0,
+              weeklyContributionCents: g.weeklyContributionCents ?? 0,
+              weeksTarget: g.weeksTarget ?? 0,
+              categoryId: g.categoryId ?? '',
+              createdAt: g.createdAt ?? new Date().toISOString(),
+              creationMode: g.creationMode ?? 'fromWeekly',
+            }));
+            setGoals(safe);
+          } catch {
+            // corrupt — start fresh
+          }
+        }
+        setHydrated(true);
+      })
+      .catch(() => {
+        if (!cancelled) setHydrated(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Persist on every state change (only after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals)).catch(() => {});
+  }, [goals, hydrated]);
 
   const addGoal = useCallback(
     (draft: GoalDraft): Goal | null => {
@@ -155,6 +198,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       goals,
+      hydrated,
       addGoal,
       updateGoal,
       deleteGoal,
@@ -166,6 +210,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     }),
     [
       goals,
+      hydrated,
       addGoal,
       updateGoal,
       deleteGoal,

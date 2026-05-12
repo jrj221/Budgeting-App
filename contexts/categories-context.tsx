@@ -1,4 +1,5 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   Category,
@@ -7,9 +8,11 @@ import {
   isCategoryNameValid,
 } from '@/components/add-transaction-card.presenter';
 import { pickNextCategoryColor } from '@/constants/colors';
+import { STORAGE_KEYS } from '@/storage/keys';
 
 type CategoriesContextValue = {
   categories: Category[];
+  hydrated: boolean;
   addCategory: (name: string, color?: string, isGoal?: boolean) => Category | null;
   deleteCategory: (id: string) => void;
   renameCategory: (id: string, name: string) => void;
@@ -27,19 +30,59 @@ const CategoriesContext = createContext<CategoriesContextValue | null>(null);
 
 export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate from storage on mount
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEYS.CATEGORIES)
+      .then((raw) => {
+        if (cancelled) return;
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as Category[];
+            // Forward-compat: fill in any missing fields
+            const safe = parsed.map((c) => ({
+              id: c.id ?? '',
+              name: c.name ?? '',
+              color: c.color ?? '#888888',
+              weeklyBudgetCents: c.weeklyBudgetCents ?? null,
+              monthlyOverrideCents: c.monthlyOverrideCents ?? null,
+              isGoal: c.isGoal ?? false,
+            }));
+            setCategories(safe);
+          } catch {
+            // corrupt — keep defaults
+          }
+        }
+        setHydrated(true);
+      })
+      .catch(() => {
+        if (!cancelled) setHydrated(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Persist on every state change (only after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories)).catch(() => {});
+  }, [categories, hydrated]);
 
   const addCategory = useCallback(
     (name: string, color?: string, isGoal = false): Category | null => {
-      let created: Category | null = null;
+      // Validate synchronously against the current snapshot of categories.
+      if (!isCategoryNameValid(name, categories)) return null;
+      const finalColor = color ?? pickNextCategoryColor(categories.map((c) => c.color));
+      const created = createCategory(name, finalColor, isGoal);
       setCategories((existing) => {
+        // Re-validate inside updater to guard against concurrent adds.
         if (!isCategoryNameValid(name, existing)) return existing;
-        const finalColor = color ?? pickNextCategoryColor(existing.map((c) => c.color));
-        created = createCategory(name, finalColor, isGoal);
         return [...existing, created];
       });
       return created;
     },
-    [],
+    [categories],
   );
 
   const deleteCategory = useCallback((id: string) => {
@@ -87,6 +130,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       categories,
+      hydrated,
       addCategory,
       deleteCategory,
       renameCategory,
@@ -97,6 +141,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     }),
     [
       categories,
+      hydrated,
       addCategory,
       deleteCategory,
       renameCategory,
