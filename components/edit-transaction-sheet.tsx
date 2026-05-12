@@ -23,6 +23,7 @@ import Animated, {
 
 import {
   formatAmountDisplay,
+  formatCentsDisplay,
   formatDateLabel,
   sanitizeAmountDigits,
   Transaction,
@@ -31,6 +32,7 @@ import {
 import { editStyles as styles } from '@/components/edit-transaction-sheet.styles';
 import { ModeColors, Palette } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
+import { useGoals } from '@/contexts/goals-context';
 import { useTransactions } from '@/contexts/transactions-context';
 
 const EDIT_NUMPAD_ACCESSORY_ID = 'edit-number-pad-done';
@@ -46,8 +48,10 @@ export function EditTransactionSheet({
   transaction,
   onClose,
 }: EditTransactionSheetProps) {
-  const { categories } = useCategories();
+  const { categories, getCategory } = useCategories();
+  const { getGoalByCategory } = useGoals();
   const {
+    transactions,
     updateTransaction,
     updateTransactionAndFuture,
     deleteTransaction,
@@ -109,21 +113,61 @@ export function EditTransactionSheet({
   }));
 
   const isSeries = !!transaction?.seriesId;
+
+  const txCategory = transaction ? getCategory(transaction.categoryId) : null;
+  const isGoalTx = !!txCategory?.isGoal;
+  const linkedGoal = isGoalTx ? getGoalByCategory(transaction!.categoryId) : null;
+  const goalColor = txCategory?.color ?? Palette.brand;
+
+  const autoGoalTitle = (m: TransactionMode) =>
+    linkedGoal
+      ? m === 'spent'
+        ? `Save toward ${linkedGoal.name}`
+        : `Withdraw from ${linkedGoal.name}`
+      : title;
+
+  const effectiveTitle = isGoalTx ? autoGoalTitle(mode) : title.trim();
+
   const canSubmit = useMemo(
-    () => parseInt(amountDigits || '0', 10) > 0 && title.trim().length > 0,
-    [amountDigits, title],
+    () => parseInt(amountDigits || '0', 10) > 0 && effectiveTitle.length > 0,
+    [amountDigits, effectiveTitle],
   );
 
   const buildPatch = () => ({
     mode,
     amountCents: parseInt(amountDigits || '0', 10),
-    title: title.trim(),
+    title: effectiveTitle,
     date: date.toISOString(),
     categoryId,
   });
 
+  const checkGoalBalance = (): { ok: boolean; resultingNet: number } => {
+    if (!isGoalTx || !transaction || !linkedGoal) return { ok: true, resultingNet: 0 };
+    const newAmount = parseInt(amountDigits || '0', 10);
+    let otherNet = 0;
+    for (const tx of transactions) {
+      if (tx.id === transaction.id) continue;
+      if (tx.categoryId !== linkedGoal.categoryId) continue;
+      if (tx.mode === 'spent') otherNet += tx.amountCents;
+      else if (tx.mode === 'earned') otherNet -= tx.amountCents;
+    }
+    const delta = mode === 'spent' ? newAmount : -newAmount;
+    const resultingNet = otherNet + delta;
+    return { ok: resultingNet >= 0, resultingNet };
+  };
+
   const handleSaveOnly = () => {
     if (!transaction || !canSubmit) return;
+    if (isGoalTx) {
+      const { ok, resultingNet } = checkGoalBalance();
+      if (!ok) {
+        Alert.alert(
+          'Not enough in this goal',
+          `Saving this change would push your "${linkedGoal!.name}" goal balance to ${formatCentsDisplay(resultingNet)}. You can't withdraw more than is currently saved.`,
+        );
+        return;
+      }
+    }
     updateTransaction(transaction.id, buildPatch());
     onClose();
   };
@@ -193,6 +237,30 @@ export function EditTransactionSheet({
             contentContainerStyle={styles.body}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
+            {isGoalTx && linkedGoal && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: 12,
+                  borderRadius: 12,
+                  backgroundColor: goalColor + '22',
+                  borderLeftWidth: 4,
+                  borderLeftColor: goalColor,
+                }}>
+                <Ionicons name="flag" size={18} color={goalColor} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: Palette.text }}>
+                    {mode === 'spent' ? 'Goal contribution' : 'Goal withdrawal'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: Palette.textMuted }}>
+                    {linkedGoal.name} · Title and category are managed by the goal.
+                  </Text>
+                </View>
+              </View>
+            )}
+
             <View style={styles.modeRow}>
               {(['spent', 'earned'] as TransactionMode[]).map((m) => {
                 const active = mode === m;
@@ -231,14 +299,22 @@ export function EditTransactionSheet({
               />
             </Pressable>
 
-            <TextInput
-              style={styles.titleInput}
-              placeholder="What's it for?"
-              placeholderTextColor={Palette.iconMuted}
-              value={title}
-              onChangeText={setTitle}
-              returnKeyType="done"
-            />
+            {isGoalTx ? (
+              <View style={[styles.titleInput, { justifyContent: 'center' }]}>
+                <Text style={{ fontSize: 17, fontWeight: '500', color: Palette.text }}>
+                  {effectiveTitle}
+                </Text>
+              </View>
+            ) : (
+              <TextInput
+                style={styles.titleInput}
+                placeholder="What's it for?"
+                placeholderTextColor={Palette.iconMuted}
+                value={title}
+                onChangeText={setTitle}
+                returnKeyType="done"
+              />
+            )}
 
             <Pressable
               style={styles.row}
@@ -274,6 +350,7 @@ export function EditTransactionSheet({
               </View>
             )}
 
+            {!isGoalTx && (
             <View>
               <Text style={[styles.rowLabel, { marginBottom: 8 }]}>Category</Text>
               <View style={styles.catGrid}>
@@ -312,6 +389,7 @@ export function EditTransactionSheet({
                 </Text>
               )}
             </View>
+            )}
 
             <Pressable
               style={[styles.saveBtn, !canSubmit && styles.saveDisabled]}

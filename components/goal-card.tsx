@@ -54,6 +54,27 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const refundCents = Math.max(0, progress.netCents);
+  const remainingTargetCents = Math.max(0, goal.targetCents - progress.netCents);
+  const remainingPlannedWeeks = Math.max(0, goal.weeksTarget - elapsed);
+  const weeksAtPlannedRate =
+    goal.weeklyContributionCents > 0
+      ? Math.ceil(remainingTargetCents / goal.weeklyContributionCents)
+      : 0;
+  const requiredWeeklyToHitDeadline =
+    remainingPlannedWeeks > 0
+      ? Math.ceil(remainingTargetCents / remainingPlannedWeeks)
+      : remainingTargetCents;
+  const expectedCompletionDate = new Date(
+    Date.now() + weeksAtPlannedRate * 7 * 24 * 60 * 60 * 1000,
+  );
+  const expectedLabel = isComplete
+    ? null
+    : `Expected completion: ${expectedCompletionDate.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })}`;
+
   const onDelete = () => {
     Alert.alert(
       'Delete this goal?',
@@ -86,10 +107,12 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
   } else if (goal.targetCents <= 0) {
     paceLabel = 'Set a target to start tracking pace.';
   } else if (onPace) {
-    paceLabel = `On pace — about ${weeksLeft} weeks to go.`;
+    paceLabel = `On pace · about ${weeksLeft} weeks to go.`;
+  } else if (goal.creationMode === 'fromWeeks') {
+    paceLabel = `Behind pace · save ${formatCentsDisplay(requiredWeeklyToHitDeadline)} / week to still hit your ${goal.weeksTarget}-week target.`;
   } else {
-    const behindCents = Math.max(0, expectedNet - progress.netCents);
-    paceLabel = `${formatCentsDisplay(behindCents)} behind pace · ${weeksLeft} weeks to go.`;
+    const extraWeeks = Math.max(0, weeksAtPlannedRate - remainingPlannedWeeks);
+    paceLabel = `Behind pace · ${extraWeeks} extra week${extraWeeks === 1 ? '' : 's'} added at your current rate.`;
   }
 
   return (
@@ -124,6 +147,7 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
       />
 
       <Text style={paceStyle}>{paceLabel}</Text>
+      {expectedLabel && <Text style={styles.pace}>{expectedLabel}</Text>}
 
       <View style={styles.actions}>
         <Pressable
@@ -258,13 +282,13 @@ function AmountInputModal({
               autoFocus
             />
           </Pressable>
+          {exceedsMax && (
+            <Text style={{ fontSize: 12, color: Palette.spent, textAlign: 'center' }}>
+              Max available: {formatCentsDisplay(maxCents ?? 0)}
+            </Text>
+          )}
           <View style={styles.buttonRow}>
-            <Pressable
-              style={styles.secondaryBtn}
-              onPress={() => {
-                setDigits('');
-                onClose();
-              }}>
+            <Pressable style={styles.secondaryBtn} onPress={dismiss}>
               <Text style={styles.secondaryText}>Cancel</Text>
             </Pressable>
             <Pressable

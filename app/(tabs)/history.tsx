@@ -145,12 +145,36 @@ function TransactionRow({
   const category = getCategory(tx.categoryId);
   const categoryName = category?.name ?? null;
   const sign = tx.mode === 'spent' ? '-' : '+';
+  const isGoalTx = !!category?.isGoal;
+  const goalColor = category?.color;
 
   return (
-    <Pressable onPress={onPress} style={[styles.row, isLast && styles.rowLast]}>
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.row,
+        isLast && styles.rowLast,
+        isGoalTx && goalColor ? { borderLeftWidth: 4, borderLeftColor: goalColor, paddingLeft: 12 } : null,
+      ]}>
       <View style={styles.rowMain}>
-        <Text style={styles.rowTitle}>{tx.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {isGoalTx && goalColor && (
+            <Ionicons name="flag" size={14} color={goalColor} />
+          )}
+          <Text style={styles.rowTitle}>{tx.title}</Text>
+        </View>
         <View style={styles.seriesBadge}>
+          {isGoalTx && goalColor && (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: goalColor }}>
+                <Ionicons name={tx.mode === 'spent' ? 'arrow-up' : 'arrow-down'} size={9} color="#fff" />
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
+                  {tx.mode === 'spent' ? 'Contribution' : 'Withdrawal'}
+                </Text>
+              </View>
+              {(categoryName || tx.seriesId) && <Text style={styles.rowMeta}>·</Text>}
+            </>
+          )}
           {categoryName && <Text style={styles.rowMeta}>{categoryName}</Text>}
           {tx.seriesId && (
             <>

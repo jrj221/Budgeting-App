@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -48,6 +49,25 @@ export default function OverviewScreen() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
 
+  const balanceCents = useMemo(() => {
+    let total = 0;
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    for (const tx of transactions) {
+      if (new Date(tx.date).getTime() > todayEnd.getTime()) continue;
+      total += tx.mode === 'earned' ? tx.amountCents : -tx.amountCents;
+    }
+    return total;
+  }, [transactions]);
+
+  const showBalanceInfo = () => {
+    Alert.alert(
+      'About your balance',
+      'This balance only reflects the starting balance you entered plus any transactions you\'ve logged here that have already taken place. It does not reflect actual funds, deposits, or charges in your real bank account.',
+      [{ text: 'Got it' }],
+    );
+  };
+
   const lineData = useMemo(() => buildFutureCashflow(transactions), [transactions]);
   const pieData = useMemo(
     () => buildCategoryDistribution(transactions, categories, pieFilter),
@@ -70,6 +90,24 @@ export default function OverviewScreen() {
           <Text style={[styles.title, { color: scheme.text }]}>Overview</Text>
           <Text style={[styles.subtitle, { color: scheme.textMuted }]}>
             Where your money goes — past and projected.
+          </Text>
+        </View>
+
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceHeaderRow}>
+            <Text style={styles.balanceLabel}>Current balance</Text>
+            <Pressable onPress={showBalanceInfo} hitSlop={8} style={styles.infoBtn}>
+              <Ionicons name="information" size={13} color={Palette.iconMuted} />
+            </Pressable>
+          </View>
+          <Text
+            style={[styles.balanceAmount, balanceCents < 0 && styles.balanceAmountNeg]}>
+            {balanceCents < 0
+              ? `-${formatCentsDisplay(Math.abs(balanceCents))}`
+              : formatCentsDisplay(balanceCents)}
+          </Text>
+          <Text style={styles.balanceSub}>
+            Starting balance plus completed transactions you&apos;ve logged.
           </Text>
         </View>
 

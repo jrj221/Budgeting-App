@@ -290,7 +290,7 @@ function CategorySheet(props: CategorySheetProps) {
 								</Pressable>
 							)}
 
-							{props.categories.map((cat) =>
+							{props.categories.filter((c) => !c.isGoal).map((cat) =>
 								props.isEditing ? (
 									<EditableCategoryRow
 										key={cat.id}

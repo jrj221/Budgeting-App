@@ -1,5 +1,7 @@
 import { Transaction } from '@/components/add-transaction-card.presenter';
 
+export type GoalCreationMode = 'fromWeekly' | 'fromWeeks';
+
 export type Goal = {
   id: string;
   name: string;
@@ -8,9 +10,8 @@ export type Goal = {
   weeksTarget: number;
   categoryId: string;
   createdAt: string;
+  creationMode: GoalCreationMode;
 };
-
-export type GoalCreationMode = 'fromWeekly' | 'fromWeeks';
 
 export type GoalDraft = {
   name: string;

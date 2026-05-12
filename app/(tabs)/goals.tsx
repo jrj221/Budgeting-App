@@ -16,6 +16,21 @@ export default function GoalsScreen() {
   const { goals } = useGoals();
   const { getCategory } = useCategories();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+
+  const editingGoal = editingGoalId
+    ? goals.find((g) => g.id === editingGoalId) ?? null
+    : null;
+
+  const openEditor = (goalId?: string) => {
+    setEditingGoalId(goalId ?? null);
+    setEditorOpen(true);
+  };
+
+  const closeEditor = () => {
+    setEditorOpen(false);
+    setEditingGoalId(null);
+  };
 
   return (
     <SafeAreaView
@@ -31,7 +46,7 @@ export default function GoalsScreen() {
               Save toward something specific.
             </Text>
           </View>
-          <Pressable style={styles.addBtn} onPress={() => setEditorOpen(true)} hitSlop={6}>
+          <Pressable style={styles.addBtn} onPress={() => openEditor()} hitSlop={6}>
             <Ionicons name="add" size={26} color="#fff" />
           </Pressable>
         </View>
@@ -44,7 +59,7 @@ export default function GoalsScreen() {
               Set a target amount and either a deadline or a weekly contribution. Each goal
               creates its own category so any transaction you log against it counts.
             </Text>
-            <Pressable style={styles.emptyCta} onPress={() => setEditorOpen(true)}>
+            <Pressable style={styles.emptyCta} onPress={() => openEditor()}>
               <Text style={styles.emptyCtaText}>Create a goal</Text>
             </Pressable>
           </View>
@@ -53,13 +68,20 @@ export default function GoalsScreen() {
             {goals.map((goal) => {
               const cat = getCategory(goal.categoryId);
               const color = cat?.color ?? Palette.brand;
-              return <GoalCard key={goal.id} goal={goal} color={color} />;
+              return (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  color={color}
+                  onEdit={() => openEditor(goal.id)}
+                />
+              );
             })}
           </View>
         )}
       </ScrollView>
 
-      <GoalEditorSheet visible={editorOpen} onClose={() => setEditorOpen(false)} />
+      <GoalEditorSheet visible={editorOpen} goal={editingGoal} onClose={closeEditor} />
     </SafeAreaView>
   );
 }

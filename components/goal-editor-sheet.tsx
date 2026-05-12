@@ -69,7 +69,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
       setName(goal.name);
       setColor(cat?.color ?? Palette.brand);
       setTargetDigits(String(goal.targetCents));
-      setMode('fromWeeks');
+      setMode(goal.creationMode);
       setWeeksDraft(String(goal.weeksTarget));
       setWeeklyDollarsDraft(String(Math.round(goal.weeklyContributionCents / 100)));
     } else {

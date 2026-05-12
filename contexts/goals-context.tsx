@@ -39,6 +39,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         weeksTarget: derived.weeks,
         categoryId: cat.id,
         createdAt: new Date().toISOString(),
+        creationMode: draft.mode,
       };
       setGoals((g) => [...g, goal]);
       return goal;
@@ -57,6 +58,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         targetCents: Math.max(0, Math.round(draft.targetCents)),
         weeklyContributionCents: derived.weeklyCents,
         weeksTarget: derived.weeks,
+        creationMode: draft.mode,
       };
       setGoals((g) => g.map((x) => (x.id === id ? updated : x)));
       renameCategory(existing.categoryId, draft.name);
