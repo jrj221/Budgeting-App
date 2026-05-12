@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
@@ -106,7 +106,7 @@ function BudgetRow({
   actualCents,
   plannedCents,
 }: {
-  cat: { id: string; name: string; color: string };
+  cat: { id: string; name: string; color: string; icon: string };
   budget: number;
   actualCents: number;
   plannedCents: number;
@@ -134,7 +134,9 @@ function BudgetRow({
     <View style={styles.row}>
       <View style={styles.rowHeader}>
         <View style={styles.rowLeft}>
-          <View style={[styles.dot, { backgroundColor: cat.color }]} />
+          <View style={[styles.dot, { backgroundColor: cat.color + '22', alignItems: 'center', justifyContent: 'center' }]}>
+              <FontAwesome5 name={cat.icon as any} size={12} color={cat.color} solid />
+            </View>
           <Text style={styles.rowName}>{cat.name}</Text>
         </View>
         <Text style={[styles.rowAmounts, overBudget && styles.rowAmountsOver]}>

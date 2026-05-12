@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORIES } from '@/components/add-transaction-card.presenter';
 import { StoredData, CURRENT_VERSION } from './types';
 
 /**
@@ -38,6 +39,7 @@ export const MIGRATIONS: Migration[] = [
         color: c.color ?? '#888888',
         weeklyBudgetCents: c.weeklyBudgetCents ?? null,
         monthlyOverrideCents: c.monthlyOverrideCents ?? null,
+        icon: c.icon ?? DEFAULT_CATEGORIES.find((d) => d.id === c.id)?.icon ?? 'tag',
         isGoal: c.isGoal ?? false,
       })),
       goals: (data.goals ?? []).map((g) => ({

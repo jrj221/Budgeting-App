@@ -5,7 +5,7 @@ describe('computeGoalDerived', () => {
   it('fromWeekly: calculates weeks from weekly amount', () => {
     const result = computeGoalDerived({
       name: 'Test', color: '#ff0000', targetCents: 10000,
-      mode: 'fromWeekly', weeklyContributionCents: 1000, weeksTarget: 0,
+      icon: 'tag', mode: 'fromWeekly', weeklyContributionCents: 1000, weeksTarget: 0,
     });
     expect(result.weeklyCents).toBe(1000);
     expect(result.weeks).toBe(10); // ceil(10000/1000)
@@ -14,7 +14,7 @@ describe('computeGoalDerived', () => {
   it('fromWeekly: weeks is 0 when weekly is 0', () => {
     const result = computeGoalDerived({
       name: 'Test', color: '#ff0000', targetCents: 10000,
-      mode: 'fromWeekly', weeklyContributionCents: 0, weeksTarget: 0,
+      icon: 'tag', mode: 'fromWeekly', weeklyContributionCents: 0, weeksTarget: 0,
     });
     expect(result.weeks).toBe(0);
   });
@@ -22,7 +22,7 @@ describe('computeGoalDerived', () => {
   it('fromWeeks: calculates weekly from weeks', () => {
     const result = computeGoalDerived({
       name: 'Test', color: '#ff0000', targetCents: 1000,
-      mode: 'fromWeeks', weeklyContributionCents: 0, weeksTarget: 10,
+      icon: 'tag', mode: 'fromWeeks', weeklyContributionCents: 0, weeksTarget: 10,
     });
     expect(result.weeks).toBe(10);
     expect(result.weeklyCents).toBe(100); // ceil(1000/10)
@@ -31,7 +31,7 @@ describe('computeGoalDerived', () => {
   it('fromWeeks: weekly is 0 when weeks is 0', () => {
     const result = computeGoalDerived({
       name: 'Test', color: '#ff0000', targetCents: 1000,
-      mode: 'fromWeeks', weeklyContributionCents: 0, weeksTarget: 0,
+      icon: 'tag', mode: 'fromWeeks', weeklyContributionCents: 0, weeksTarget: 0,
     });
     expect(result.weeklyCents).toBe(0);
   });

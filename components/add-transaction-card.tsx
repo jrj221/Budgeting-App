@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useRef, useState } from "react";
 import type { StyleProp, TextStyle } from "react-native";
@@ -35,6 +35,7 @@ import {
 } from "@/components/add-transaction-card.presenter";
 import { styles } from "@/components/add-transaction-card.styles";
 import { ColorPickerModal } from "@/components/color-picker-modal";
+import { IconPickerModal } from "@/components/icon-picker-modal";
 import { ModeColors, Palette, pickNextCategoryColor } from "@/constants/colors";
 import { useAddTransactionCard } from "@/hooks/use-add-transaction-card";
 
@@ -177,6 +178,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				onAdd={presenter.addCategory}
 				onRename={presenter.renameCategory}
 				onSetColor={presenter.setCategoryColor}
+				onSetIcon={presenter.setCategoryIcon}
 			/>
 
 			<RepeatSheet
@@ -240,9 +242,10 @@ type CategorySheetProps = {
 	onToggleEdit: () => void;
 	onDelete: (id: string) => void;
 	onChangeNewName: (s: string) => void;
-	onAdd: (color?: string) => unknown;
+	onAdd: (color?: string, icon?: string) => unknown;
 	onRename: (id: string, name: string) => void;
 	onSetColor: (id: string, color: string) => void;
+	onSetIcon: (id: string, icon: string) => void;
 };
 
 function CategorySheet(props: CategorySheetProps) {
@@ -279,57 +282,59 @@ function CategorySheet(props: CategorySheetProps) {
 							keyboardShouldPersistTaps="handled"
 							showsVerticalScrollIndicator={false}
 						>
-							{!props.isEditing && (
-								<Pressable style={styles.sheetRow} onPress={() => props.onSelect(null)}>
-									<View style={styles.sheetRowSelect}>
-										<Text style={[styles.sheetRowText, styles.sheetRowMuted]}>None</Text>
-										{props.selectedId === null && (
-											<Ionicons name="checkmark" size={20} color={Palette.brand} />
-										)}
-									</View>
-								</Pressable>
-							)}
-
-							{props.categories.filter((c) => !c.isGoal).map((cat) =>
-								props.isEditing ? (
-									<EditableCategoryRow
-										key={cat.id}
-										category={cat}
-										onDelete={() => props.onDelete(cat.id)}
-										onRename={(name) => props.onRename(cat.id, name)}
-										onSetColor={(c) => props.onSetColor(cat.id, c)}
-									/>
-								) : (
-									<View key={cat.id} style={styles.sheetRow}>
-										<Pressable
-											style={styles.sheetRowSelect}
-											onPress={() => props.onSelect(cat.id)}
-										>
-											<View style={styles.categoryRowLeft}>
-												<View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
-												<Text style={styles.sheetRowText}>{cat.name}</Text>
-												{cat.isGoal && (
-													<View style={{ flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: cat.color }}>
-														<Ionicons name="flag" size={10} color="#fff" />
-														<Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Goal</Text>
+							{props.isEditing ? (
+								<View>
+									{props.categories.filter((c) => !c.isGoal).map((cat) => (
+										<EditableCategoryRow
+											key={cat.id}
+											category={cat}
+											onDelete={() => props.onDelete(cat.id)}
+											onRename={(name) => props.onRename(cat.id, name)}
+											onSetColor={(c) => props.onSetColor(cat.id, c)}
+											onSetIcon={(ic) => props.onSetIcon(cat.id, ic)}
+										/>
+									))}
+								</View>
+							) : (
+								<View style={styles.catGrid}>
+									<Pressable
+										style={[styles.catGridCell, props.selectedId === null && styles.catGridCellSelected]}
+										onPress={() => props.onSelect(null)}
+									>
+										<View style={[styles.catGridIcon, { backgroundColor: Palette.surface }]}>
+											<Ionicons name="ban" size={20} color={Palette.iconMuted} />
+										</View>
+										<Text style={styles.catGridLabel} numberOfLines={1}>None</Text>
+									</Pressable>
+									{props.categories.filter((c) => !c.isGoal).map((cat) => {
+										const sel = props.selectedId === cat.id;
+										return (
+											<Pressable
+												key={cat.id}
+												style={[styles.catGridCell, sel && styles.catGridCellSelected]}
+												onPress={() => props.onSelect(cat.id)}
+											>
+												<View style={[styles.catGridIcon, { backgroundColor: cat.color + "22" }]}>
+													<FontAwesome5 name={cat.icon as any} size={20} color={cat.color} solid />
+												</View>
+												<Text style={styles.catGridLabel} numberOfLines={1}>{cat.name}</Text>
+												{sel && (
+													<View style={styles.catGridCheck}>
+														<Ionicons name="checkmark-circle" size={16} color={Palette.brand} />
 													</View>
 												)}
-											</View>
-											{props.selectedId === cat.id && (
-												<Ionicons name="checkmark" size={20} color={Palette.brand} />
-											)}
-										</Pressable>
-									</View>
-								),
+											</Pressable>
+										);
+									})}
+								</View>
 							)}
 						</ScrollView>
-
 						{props.isEditing && (
 							<AddCategoryRow
 								name={props.newName}
 								existingColors={props.categories.map((c) => c.color)}
 								onChangeName={props.onChangeNewName}
-								onSubmit={(color) => props.onAdd(color)}
+								onSubmit={(color: string, icon: string) => { props.onAdd(color, icon); }}
 							/>
 						)}
 					</Pressable>
@@ -345,15 +350,18 @@ function EditableCategoryRow({
 	onDelete,
 	onRename,
 	onSetColor,
+	onSetIcon,
 }: {
 	category: Category;
 	onDelete: () => void;
 	onRename: (name: string) => void;
 	onSetColor: (color: string) => void;
+	onSetIcon: (icon: string) => void;
 }) {
 	const [editing, setEditing] = useState(false);
 	const [draftName, setDraftName] = useState(category.name);
-	const [pickerOpen, setPickerOpen] = useState(false);
+	const [colorPickerOpen, setColorPickerOpen] = useState(false);
+	const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
 	useEffect(() => {
 		setDraftName(category.name);
@@ -373,11 +381,14 @@ function EditableCategoryRow({
 			</Pressable>
 			<View style={styles.sheetRowSelect}>
 				<View style={styles.categoryRowLeft}>
-					<Pressable onPress={() => setPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
+					<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
 						<View style={[styles.categoryDot, { backgroundColor: category.color }]} />
 						<View style={styles.editColorBadge}>
 							<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
 						</View>
+					</Pressable>
+					<Pressable onPress={() => setIconPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: category.color + '18' }]}>
+						<FontAwesome5 name={category.icon as any} size={14} color={category.color} solid />
 					</Pressable>
 					{editing ? (
 						<TextInput
@@ -399,13 +410,8 @@ function EditableCategoryRow({
 					<Ionicons name="create-outline" size={18} color={Palette.iconMuted} />
 				</Pressable>
 			</View>
-			<ColorPickerModal
-				visible={pickerOpen}
-				initialColor={category.color}
-				title={`Color for ${category.name}`}
-				onClose={() => setPickerOpen(false)}
-				onSelect={onSetColor}
-			/>
+			<ColorPickerModal visible={colorPickerOpen} initialColor={category.color} title={`Color for ${category.name}`} onClose={() => setColorPickerOpen(false)} onSelect={onSetColor} />
+			<IconPickerModal visible={iconPickerOpen} selected={category.icon} color={category.color} title={`Icon for ${category.name}`} onClose={() => setIconPickerOpen(false)} onSelect={onSetIcon} />
 		</View>
 	);
 }
@@ -419,10 +425,12 @@ function AddCategoryRow({
 	name: string;
 	existingColors: string[];
 	onChangeName: (s: string) => void;
-	onSubmit: (color: string) => void;
+	onSubmit: (color: string, icon: string) => void;
 }) {
 	const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
-	const [pickerOpen, setPickerOpen] = useState(false);
+	const [icon, setIcon] = useState('tag');
+	const [colorPickerOpen, setColorPickerOpen] = useState(false);
+	const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
 	useEffect(() => {
 		if (!existingColors.includes(color)) return;
@@ -432,21 +440,21 @@ function AddCategoryRow({
 	const canAdd = name.trim().length > 0;
 	const submit = () => {
 		if (!canAdd) return;
-		onSubmit(color);
+		onSubmit(color, icon);
 		setColor(pickNextCategoryColor([...existingColors, color]));
+		setIcon('tag');
 	};
 
 	return (
 		<View style={styles.addRow}>
-			<Pressable
-				onPress={() => setPickerOpen(true)}
-				hitSlop={6}
-				style={styles.editColorBtn}
-			>
+			<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
 				<View style={[styles.categoryDot, { backgroundColor: color }]} />
 				<View style={styles.editColorBadge}>
 					<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
 				</View>
+			</Pressable>
+			<Pressable onPress={() => setIconPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: color + '18' }]}>
+				<FontAwesome5 name={icon as any} size={14} color={color} solid />
 			</Pressable>
 			<TextInput
 				style={styles.addInput}
@@ -458,19 +466,10 @@ function AddCategoryRow({
 				onSubmitEditing={submit}
 			/>
 			<Pressable onPress={submit} disabled={!canAdd} hitSlop={6}>
-				<Ionicons
-					name="add-circle"
-					size={30}
-					color={canAdd ? Palette.brand : Palette.submitDisabled}
-				/>
+				<Ionicons name="add-circle" size={30} color={canAdd ? Palette.brand : Palette.submitDisabled} />
 			</Pressable>
-			<ColorPickerModal
-				visible={pickerOpen}
-				initialColor={color}
-				title="Pick a color"
-				onClose={() => setPickerOpen(false)}
-				onSelect={setColor}
-			/>
+			<ColorPickerModal visible={colorPickerOpen} initialColor={color} title="Pick a color" onClose={() => setColorPickerOpen(false)} onSelect={setColor} />
+			<IconPickerModal visible={iconPickerOpen} selected={icon} color={color} title="Pick an icon" onClose={() => setIconPickerOpen(false)} onSelect={setIcon} />
 		</View>
 	);
 }

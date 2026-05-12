@@ -31,7 +31,7 @@ describe('Goal full flow integration', () => {
     name: 'Emergency Fund',
     color: '#10b981',
     targetCents: 50000,
-    mode: 'fromWeeks',
+    mode: 'fromWeeks', icon: 'tag',
     weeklyContributionCents: 0,
     weeksTarget: 10,
   };

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -175,7 +175,12 @@ function TransactionRow({
               {(categoryName || tx.seriesId) && <Text style={styles.rowMeta}>·</Text>}
             </>
           )}
-          {categoryName && <Text style={styles.rowMeta}>{categoryName}</Text>}
+          {category && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
+                <Text style={styles.rowMeta}>{categoryName}</Text>
+              </View>
+            )}
           {tx.seriesId && (
             <>
               {categoryName && <Text style={styles.rowMeta}>·</Text>}

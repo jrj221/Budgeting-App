@@ -88,9 +88,9 @@ export const budgetCardStyles = StyleSheet.create({
     flex: 1,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 24,
+    height: 24,
+    borderRadius: 8,
   },
   rowName: {
     fontSize: 14,

@@ -13,10 +13,11 @@ import { STORAGE_KEYS } from '@/storage/keys';
 type CategoriesContextValue = {
   categories: Category[];
   hydrated: boolean;
-  addCategory: (name: string, color?: string, isGoal?: boolean) => Category | null;
+  addCategory: (name: string, color?: string, isGoal?: boolean, icon?: string) => Category | null;
   deleteCategory: (id: string) => void;
   renameCategory: (id: string, name: string) => void;
   setCategoryColor: (id: string, color: string) => void;
+  setCategoryIcon: (id: string, icon: string) => void;
   setCategoryBudget: (
     id: string,
     weeklyCents: number | null,
@@ -42,14 +43,18 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
           try {
             const parsed = JSON.parse(raw) as Category[];
             // Forward-compat: fill in any missing fields
-            const safe = parsed.map((c) => ({
-              id: c.id ?? '',
-              name: c.name ?? '',
-              color: c.color ?? '#888888',
-              weeklyBudgetCents: c.weeklyBudgetCents ?? null,
-              monthlyOverrideCents: c.monthlyOverrideCents ?? null,
-              isGoal: c.isGoal ?? false,
-            }));
+            const safe = parsed.map((c) => {
+              const defaultMatch = DEFAULT_CATEGORIES.find((d) => d.id === c.id);
+              return {
+                id: c.id ?? '',
+                name: c.name ?? '',
+                color: c.color ?? '#888888',
+                icon: c.icon ?? defaultMatch?.icon ?? 'tag',
+                weeklyBudgetCents: c.weeklyBudgetCents ?? null,
+                monthlyOverrideCents: c.monthlyOverrideCents ?? null,
+                isGoal: c.isGoal ?? false,
+              };
+            });
             setCategories(safe);
           } catch {
             // corrupt — keep defaults
@@ -70,13 +75,11 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   }, [categories, hydrated]);
 
   const addCategory = useCallback(
-    (name: string, color?: string, isGoal = false): Category | null => {
-      // Validate synchronously against the current snapshot of categories.
+    (name: string, color?: string, isGoal = false, icon?: string): Category | null => {
       if (!isCategoryNameValid(name, categories)) return null;
       const finalColor = color ?? pickNextCategoryColor(categories.map((c) => c.color));
-      const created = createCategory(name, finalColor, isGoal);
+      const created = createCategory(name, finalColor, isGoal, icon ?? 'tag');
       setCategories((existing) => {
-        // Re-validate inside updater to guard against concurrent adds.
         if (!isCategoryNameValid(name, existing)) return existing;
         return [...existing, created];
       });
@@ -100,6 +103,12 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const setCategoryColor = useCallback((id: string, color: string) => {
     setCategories((existing) =>
       existing.map((c) => (c.id === id ? { ...c, color } : c)),
+    );
+  }, []);
+
+  const setCategoryIcon = useCallback((id: string, icon: string) => {
+    setCategories((existing) =>
+      existing.map((c) => (c.id === id ? { ...c, icon } : c)),
     );
   }, []);
 
@@ -135,6 +144,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       deleteCategory,
       renameCategory,
       setCategoryColor,
+      setCategoryIcon,
       setCategoryBudget,
       replaceAll,
       getCategory,
@@ -146,6 +156,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       deleteCategory,
       renameCategory,
       setCategoryColor,
+      setCategoryIcon,
       setCategoryBudget,
       replaceAll,
       getCategory,

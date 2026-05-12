@@ -126,6 +126,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 		const sampleGoal = addGoal({
 			name: "New laptop",
 			color: "#22c55e",
+			icon: "laptop",
 			targetCents: 120000,
 			mode: "fromWeeks",
 			weeksTarget: 24,

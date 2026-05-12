@@ -23,6 +23,7 @@ import Animated, {
 import { Category } from '@/components/add-transaction-card.presenter';
 import { budgetEditorStyles as styles } from '@/components/budget-editor-sheet.styles';
 import { ColorPickerModal } from '@/components/color-picker-modal';
+import { IconPickerModal } from '@/components/icon-picker-modal';
 import { Palette, pickNextCategoryColor } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
 
@@ -133,7 +134,7 @@ export function BudgetEditorSheet({
 
               <AddCategoryRow
                 existingColors={categories.map((c) => c.color)}
-                onAdd={(name, color) => addCategory(name, color)}
+                onAdd={(name, color, icon) => addCategory(name, color, false, icon)}
               />
             </View>
 
@@ -359,11 +360,13 @@ function AddCategoryRow({
   onAdd,
 }: {
   existingColors: string[];
-  onAdd: (name: string, color: string) => unknown;
+  onAdd: (name: string, color: string, icon: string) => unknown;
 }) {
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
+  const [icon, setIcon] = useState('tag');
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   // Re-suggest a color whenever the existing palette shifts (after add/delete) and
   // the user hasn't manually picked a still-present color.
@@ -377,22 +380,23 @@ function AddCategoryRow({
 
   const submit = () => {
     if (!canAdd) return;
-    onAdd(trimmed, color);
+    onAdd(trimmed, color, icon);
     setName('');
+    setIcon('tag');
     setColor(pickNextCategoryColor([...existingColors, color]));
   };
 
   return (
     <View style={styles.addColumn}>
       <View style={styles.addColumnHeader}>
-        <Pressable
-          onPress={() => setColorPickerOpen(true)}
-          hitSlop={6}
-          style={styles.editColorBtn}>
+        <Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
           <View style={[styles.catDot, { backgroundColor: color }]} />
           <View style={styles.editColorBadge}>
             <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
           </View>
+        </Pressable>
+        <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: color + '18' }]}>
+          <Ionicons name="apps-sharp" size={14} color={color} />
         </Pressable>
         <Text style={styles.addColumnTitle}>Add a category</Text>
       </View>
@@ -420,6 +424,14 @@ function AddCategoryRow({
         title="Pick a color"
         onClose={() => setColorPickerOpen(false)}
         onSelect={setColor}
+      />
+      <IconPickerModal
+        visible={iconPickerOpen}
+        selected={icon}
+        color={color}
+        title="Pick an icon"
+        onClose={() => setIconPickerOpen(false)}
+        onSelect={setIcon}
       />
     </View>
   );

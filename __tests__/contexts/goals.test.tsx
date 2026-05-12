@@ -29,7 +29,7 @@ const draft: GoalDraft = {
   name: 'Vacation',
   color: '#3b82f6',
   targetCents: 100000,
-  mode: 'fromWeekly',
+  icon: 'tag', mode: 'fromWeekly',
   weeklyContributionCents: 5000,
   weeksTarget: 0,
 };

@@ -29,7 +29,7 @@ const GoalsContext = createContext<GoalsContextValue | null>(null);
 export function GoalsProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const { addCategory, deleteCategory, renameCategory, setCategoryColor } = useCategories();
+  const { addCategory, deleteCategory, renameCategory, setCategoryColor, setCategoryIcon } = useCategories();
   const { addTransactions, transactions } = useTransactions();
 
   // Hydrate from storage on mount
@@ -73,7 +73,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const addGoal = useCallback(
     (draft: GoalDraft): Goal | null => {
-      const cat = addCategory(draft.name, draft.color, true);
+      const cat = addCategory(draft.name, draft.color, true, draft.icon ?? 'flag');
       if (!cat) return null;
       const derived = computeGoalDerived(draft);
       const goal: Goal = {
@@ -108,6 +108,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       setGoals((g) => g.map((x) => (x.id === id ? updated : x)));
       renameCategory(existing.categoryId, draft.name);
       setCategoryColor(existing.categoryId, draft.color);
+      if (draft.icon) setCategoryIcon(existing.categoryId, draft.icon);
       return updated;
     },
     [goals, renameCategory, setCategoryColor],

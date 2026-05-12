@@ -9,6 +9,7 @@ export type StoredCategory = {
   id: string;
   name: string;
   color: string;
+  icon: string;
   weeklyBudgetCents: number | null;
   monthlyOverrideCents: number | null;
   isGoal: boolean;

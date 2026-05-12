@@ -27,6 +27,7 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     deleteCategory: deleteCategoryFromStore,
     renameCategory,
     setCategoryColor,
+    setCategoryIcon,
   } = useCategories();
 
   const [draft, setDraft] = useState<DraftTransaction>(makeInitialDraft);
@@ -85,8 +86,8 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
   }, []);
 
   const addCategory = useCallback(
-    (color?: string) => {
-      const created = addCategoryToStore(newCategoryName, color);
+    (color?: string, icon?: string) => {
+      const created = addCategoryToStore(newCategoryName, color, false, icon);
       if (created) setNewCategoryName('');
       return created;
     },
@@ -163,6 +164,7 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     deleteCategory,
     renameCategory,
     setCategoryColor,
+    setCategoryIcon,
     setNewCategoryName,
     openRepeatSheet,
     closeRepeatSheet,

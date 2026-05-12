@@ -88,7 +88,7 @@ describe('applyMigrations', () => {
     const data: StoredData = {
       schemaVersion: CURRENT_VERSION,
       transactions: [{ id: 'tx1', seriesId: null, mode: 'spent', amountCents: 1000, title: 'Lunch', date: '2024-01-01T00:00:00.000Z', categoryId: 'food' }],
-      categories: [{ id: 'food', name: 'Food', color: '#ef4444', weeklyBudgetCents: null, monthlyOverrideCents: null, isGoal: false }],
+      categories: [{ id: 'food', name: 'Food', color: '#ef4444', weeklyBudgetCents: null, monthlyOverrideCents: null, isGoal: false, icon: 'tag' }],
       goals: [],
       schemeId: 'default',
     };

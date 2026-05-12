@@ -16,6 +16,7 @@ export type Goal = {
 export type GoalDraft = {
   name: string;
   color: string;
+  icon?: string;
   targetCents: number;
   mode: GoalCreationMode;
   weeklyContributionCents: number;

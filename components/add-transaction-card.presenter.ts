@@ -4,6 +4,7 @@ export type Category = {
 	id: string;
 	name: string;
 	color: string;
+	icon: string;
 	weeklyBudgetCents: number | null;
 	monthlyOverrideCents: number | null;
 	isGoal: boolean;
@@ -40,10 +41,42 @@ export type Transaction = {
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [
-	{ id: "food", name: "Food", color: "#ef4444", weeklyBudgetCents: null, monthlyOverrideCents: null, isGoal: false },
-	{ id: "gas", name: "Gas", color: "#f59e0b", weeklyBudgetCents: null, monthlyOverrideCents: null, isGoal: false },
-	{ id: "fun", name: "Fun", color: "#a855f7", weeklyBudgetCents: null, monthlyOverrideCents: null, isGoal: false },
-	{ id: "bills", name: "Bills", color: "#3b82f6", weeklyBudgetCents: null, monthlyOverrideCents: null, isGoal: false },
+	{
+		id: "food",
+		name: "Food",
+		color: "#ef4444",
+		icon: "utensils",
+		weeklyBudgetCents: null,
+		monthlyOverrideCents: null,
+		isGoal: false,
+	},
+	{
+		id: "gas",
+		name: "Gas",
+		color: "#f59e0b",
+		icon: "gas-pump",
+		weeklyBudgetCents: null,
+		monthlyOverrideCents: null,
+		isGoal: false,
+	},
+	{
+		id: "fun",
+		name: "Fun",
+		color: "#a855f7",
+		icon: "gamepad",
+		weeklyBudgetCents: null,
+		monthlyOverrideCents: null,
+		isGoal: false,
+	},
+	{
+		id: "bills",
+		name: "Bills",
+		color: "#3b82f6",
+		icon: "bolt",
+		weeklyBudgetCents: null,
+		monthlyOverrideCents: null,
+		isGoal: false,
+	},
 ];
 
 export const MODE_LABELS: Record<TransactionMode, string> = {
@@ -119,11 +152,12 @@ function generateId(prefix: string): string {
 	return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function createCategory(name: string, color: string, isGoal = false): Category {
+export function createCategory(name: string, color: string, isGoal = false, icon = "tag"): Category {
 	return {
 		id: generateId("cat"),
 		name: name.trim(),
 		color,
+		icon,
 		weeklyBudgetCents: null,
 		monthlyOverrideCents: null,
 		isGoal,

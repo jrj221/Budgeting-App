@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   InputAccessoryView,
@@ -26,6 +26,7 @@ import {
   sanitizeAmountDigits,
 } from '@/components/add-transaction-card.presenter';
 import { ColorPickerModal } from '@/components/color-picker-modal';
+import { IconPickerModal } from '@/components/icon-picker-modal';
 import { goalEditorStyles as styles } from '@/components/goal-editor-sheet.styles';
 import { CategoryColorPalette, Palette, pickNextCategoryColor } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
@@ -51,6 +52,8 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
     pickNextCategoryColor(existingColors.length ? existingColors : CategoryColorPalette.slice()),
   );
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [icon, setIcon] = useState('flag');
   const [targetDigits, setTargetDigits] = useState('');
   const [mode, setMode] = useState<GoalCreationMode>('fromWeeks');
   const [weeksDraft, setWeeksDraft] = useState('12');
@@ -68,6 +71,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
       const cat = getCategory(goal.categoryId);
       setName(goal.name);
       setColor(cat?.color ?? Palette.brand);
+      setIcon(cat?.icon ?? 'flag');
       setTargetDigits(String(goal.targetCents));
       setMode(goal.creationMode);
       setWeeksDraft(String(goal.weeksTarget));
@@ -77,6 +81,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
       setColor(
         pickNextCategoryColor(existingColors.length ? existingColors : CategoryColorPalette.slice()),
       );
+      setIcon('flag');
       setTargetDigits('');
       setMode('fromWeeks');
       setWeeksDraft('12');
@@ -132,6 +137,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
     const draft = {
       name,
       color,
+      icon,
       targetCents,
       mode,
       weeklyContributionCents: weeklyCentsValue,
@@ -174,6 +180,12 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
                 <View style={styles.editColorBadge}>
                   <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
                 </View>
+              </Pressable>
+              <Pressable
+                onPress={() => setIconPickerOpen(true)}
+                hitSlop={6}
+                style={[styles.editColorBtn, { backgroundColor: color + '18' }]}>
+                <FontAwesome5 name={icon as any} size={14} color={color} solid />
               </Pressable>
               <TextInput
                 style={styles.nameInput}
@@ -294,6 +306,14 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
         </InputAccessoryView>
       )}
 
+      <IconPickerModal
+        visible={iconPickerOpen}
+        selected={icon}
+        color={color}
+        title="Pick an icon"
+        onClose={() => setIconPickerOpen(false)}
+        onSelect={setIcon}
+      />
       <ColorPickerModal
         visible={colorPickerOpen}
         initialColor={color}
