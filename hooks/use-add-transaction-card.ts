@@ -25,6 +25,8 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     categories,
     addCategory: addCategoryToStore,
     deleteCategory: deleteCategoryFromStore,
+    renameCategory,
+    setCategoryColor,
   } = useCategories();
 
   const [draft, setDraft] = useState<DraftTransaction>(makeInitialDraft);
@@ -36,7 +38,11 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
   const [newCategoryName, setNewCategoryName] = useState('');
 
   const setMode = useCallback((mode: TransactionMode) => {
-    setDraft((d) => ({ ...d, mode }));
+    setDraft((d) => ({
+      ...d,
+      mode,
+      categoryId: mode === 'earned' ? null : d.categoryId,
+    }));
   }, []);
 
   const setAmountFromInput = useCallback((input: string) => {
@@ -78,10 +84,14 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     setIsEditingCategories((v) => !v);
   }, []);
 
-  const addCategory = useCallback(() => {
-    const created = addCategoryToStore(newCategoryName);
-    if (created) setNewCategoryName('');
-  }, [addCategoryToStore, newCategoryName]);
+  const addCategory = useCallback(
+    (color?: string) => {
+      const created = addCategoryToStore(newCategoryName, color);
+      if (created) setNewCategoryName('');
+      return created;
+    },
+    [addCategoryToStore, newCategoryName],
+  );
 
   const deleteCategory = useCallback(
     (id: string) => {
@@ -151,6 +161,8 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     toggleEditCategories,
     addCategory,
     deleteCategory,
+    renameCategory,
+    setCategoryColor,
     setNewCategoryName,
     openRepeatSheet,
     closeRepeatSheet,

@@ -95,7 +95,7 @@ export function generateSampleTransactions(): Transaction[] {
       amountCents: 250000,
       title: 'Paycheck',
       date: dayOffsetIso(i * 14, now),
-      categoryId: 'work',
+      categoryId: null,
     });
   }
 

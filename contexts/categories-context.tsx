@@ -10,9 +10,10 @@ import { pickNextCategoryColor } from '@/constants/colors';
 
 type CategoriesContextValue = {
   categories: Category[];
-  addCategory: (name: string) => Category | null;
+  addCategory: (name: string, color?: string) => Category | null;
   deleteCategory: (id: string) => void;
   renameCategory: (id: string, name: string) => void;
+  setCategoryColor: (id: string, color: string) => void;
   setCategoryBudget: (
     id: string,
     weeklyCents: number | null,
@@ -26,12 +27,12 @@ const CategoriesContext = createContext<CategoriesContextValue | null>(null);
 export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
 
-  const addCategory = useCallback((name: string): Category | null => {
+  const addCategory = useCallback((name: string, color?: string): Category | null => {
     let created: Category | null = null;
     setCategories((existing) => {
       if (!isCategoryNameValid(name, existing)) return existing;
-      const color = pickNextCategoryColor(existing.map((c) => c.color));
-      created = createCategory(name, color);
+      const finalColor = color ?? pickNextCategoryColor(existing.map((c) => c.color));
+      created = createCategory(name, finalColor);
       return [...existing, created];
     });
     return created;
@@ -46,6 +47,12 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     if (trimmed.length === 0) return;
     setCategories((existing) =>
       existing.map((c) => (c.id === id ? { ...c, name: trimmed } : c)),
+    );
+  }, []);
+
+  const setCategoryColor = useCallback((id: string, color: string) => {
+    setCategories((existing) =>
+      existing.map((c) => (c.id === id ? { ...c, color } : c)),
     );
   }, []);
 
@@ -77,10 +84,19 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       addCategory,
       deleteCategory,
       renameCategory,
+      setCategoryColor,
       setCategoryBudget,
       getCategory,
     }),
-    [categories, addCategory, deleteCategory, renameCategory, setCategoryBudget, getCategory],
+    [
+      categories,
+      addCategory,
+      deleteCategory,
+      renameCategory,
+      setCategoryColor,
+      setCategoryBudget,
+      getCategory,
+    ],
   );
 
   return <CategoriesContext.Provider value={value}>{children}</CategoriesContext.Provider>;

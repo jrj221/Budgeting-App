@@ -34,7 +34,8 @@ import {
 	TransactionMode,
 } from "@/components/add-transaction-card.presenter";
 import { styles } from "@/components/add-transaction-card.styles";
-import { ModeColors, Palette } from "@/constants/colors";
+import { ColorPickerModal } from "@/components/color-picker-modal";
+import { ModeColors, Palette, pickNextCategoryColor } from "@/constants/colors";
 import { useAddTransactionCard } from "@/hooks/use-add-transaction-card";
 
 export type AddTransactionCardProps = {
@@ -111,24 +112,26 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				</View>
 			)}
 
-			<Pressable
-				style={styles.row}
-				onPress={() => {
-					Keyboard.dismiss();
-					presenter.openCategorySheet();
-				}}
-			>
-				<View style={styles.rowLeft}>
-					<Ionicons name="pricetag-outline" size={20} color={Palette.text} />
-					<Text style={styles.rowLabel}>Category</Text>
-				</View>
-				<View style={styles.rowRight}>
-					<Text style={[styles.rowValue, !presenter.selectedCategory && styles.rowValueMuted]}>
-						{presenter.selectedCategory?.name ?? "None"}
-					</Text>
-					<Ionicons name="chevron-forward" size={18} color={Palette.iconMuted} />
-				</View>
-			</Pressable>
+			{presenter.draft.mode === "spent" && (
+				<Pressable
+					style={styles.row}
+					onPress={() => {
+						Keyboard.dismiss();
+						presenter.openCategorySheet();
+					}}
+				>
+					<View style={styles.rowLeft}>
+						<Ionicons name="pricetag-outline" size={20} color={Palette.text} />
+						<Text style={styles.rowLabel}>Category</Text>
+					</View>
+					<View style={styles.rowRight}>
+						<Text style={[styles.rowValue, !presenter.selectedCategory && styles.rowValueMuted]}>
+							{presenter.selectedCategory?.name ?? "None"}
+						</Text>
+						<Ionicons name="chevron-forward" size={18} color={Palette.iconMuted} />
+					</View>
+				</Pressable>
+			)}
 
 			<Pressable
 				style={styles.row}
@@ -172,6 +175,8 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				onDelete={presenter.deleteCategory}
 				onChangeNewName={presenter.setNewCategoryName}
 				onAdd={presenter.addCategory}
+				onRename={presenter.renameCategory}
+				onSetColor={presenter.setCategoryColor}
 			/>
 
 			<RepeatSheet
@@ -235,7 +240,9 @@ type CategorySheetProps = {
 	onToggleEdit: () => void;
 	onDelete: (id: string) => void;
 	onChangeNewName: (s: string) => void;
-	onAdd: () => void;
+	onAdd: (color?: string) => unknown;
+	onRename: (id: string, name: string) => void;
+	onSetColor: (id: string, color: string) => void;
 };
 
 function CategorySheet(props: CategorySheetProps) {
@@ -245,13 +252,17 @@ function CategorySheet(props: CategorySheetProps) {
 
 	return (
 		<Modal visible={props.visible} animationType="slide" transparent onRequestClose={props.onClose}>
-			<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
-				<Animated.View style={[styles.sheet, sheet.animatedStyle]}>
-					<Pressable onPress={() => {}}>
-						<GestureDetector gesture={sheet.gesture}>
-							<View style={styles.sheetGrabber}>
-								<View style={styles.sheetHandle} />
-								<View style={styles.sheetHeader}>
+			<KeyboardAvoidingView
+				style={{ flex: 1 }}
+				behavior={Platform.OS === "ios" ? "padding" : undefined}
+			>
+				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
+					<Animated.View style={[styles.sheet, sheet.animatedStyle]}>
+						<Pressable onPress={() => {}}>
+							<GestureDetector gesture={sheet.gesture}>
+								<View style={styles.sheetGrabber}>
+									<View style={styles.sheetHandle} />
+									<View style={styles.sheetHeader}>
 									<Pressable onPress={props.onClose} hitSlop={10}>
 										<Text style={styles.sheetCancel}>Cancel</Text>
 									</Pressable>
@@ -279,54 +290,182 @@ function CategorySheet(props: CategorySheetProps) {
 								</Pressable>
 							)}
 
-							{props.categories.map((cat) => (
-								<View key={cat.id} style={styles.sheetRow}>
-									{props.isEditing && (
+							{props.categories.map((cat) =>
+								props.isEditing ? (
+									<EditableCategoryRow
+										key={cat.id}
+										category={cat}
+										onDelete={() => props.onDelete(cat.id)}
+										onRename={(name) => props.onRename(cat.id, name)}
+										onSetColor={(c) => props.onSetColor(cat.id, c)}
+									/>
+								) : (
+									<View key={cat.id} style={styles.sheetRow}>
 										<Pressable
-											onPress={() => props.onDelete(cat.id)}
-											style={styles.deleteBtn}
-											hitSlop={8}
+											style={styles.sheetRowSelect}
+											onPress={() => props.onSelect(cat.id)}
 										>
-											<Ionicons name="remove-circle" size={22} color={Palette.spent} />
+											<View style={styles.categoryRowLeft}>
+												<View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
+												<Text style={styles.sheetRowText}>{cat.name}</Text>
+											</View>
+											{props.selectedId === cat.id && (
+												<Ionicons name="checkmark" size={20} color={Palette.brand} />
+											)}
 										</Pressable>
-									)}
-									<Pressable
-										style={styles.sheetRowSelect}
-										onPress={() => !props.isEditing && props.onSelect(cat.id)}
-										disabled={props.isEditing}
-									>
-										<View style={styles.categoryRowLeft}>
-											<View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
-											<Text style={styles.sheetRowText}>{cat.name}</Text>
-										</View>
-										{props.selectedId === cat.id && !props.isEditing && (
-											<Ionicons name="checkmark" size={20} color={Palette.brand} />
-										)}
-									</Pressable>
-								</View>
-							))}
+									</View>
+								),
+							)}
 						</ScrollView>
 
 						{props.isEditing && (
-							<View style={styles.addRow}>
-								<TextInput
-									style={styles.addInput}
-									placeholder="New category name"
-									placeholderTextColor={Palette.iconMuted}
-									value={props.newName}
-									onChangeText={props.onChangeNewName}
-									returnKeyType="done"
-									onSubmitEditing={props.onAdd}
-								/>
-								<Pressable onPress={props.onAdd} hitSlop={6}>
-									<Ionicons name="add-circle" size={30} color={Palette.brand} />
-								</Pressable>
-							</View>
+							<AddCategoryRow
+								name={props.newName}
+								existingColors={props.categories.map((c) => c.color)}
+								onChangeName={props.onChangeNewName}
+								onSubmit={(color) => props.onAdd(color)}
+							/>
 						)}
 					</Pressable>
 				</Animated.View>
 			</Pressable>
+			</KeyboardAvoidingView>
 		</Modal>
+	);
+}
+
+function EditableCategoryRow({
+	category,
+	onDelete,
+	onRename,
+	onSetColor,
+}: {
+	category: Category;
+	onDelete: () => void;
+	onRename: (name: string) => void;
+	onSetColor: (color: string) => void;
+}) {
+	const [editing, setEditing] = useState(false);
+	const [draftName, setDraftName] = useState(category.name);
+	const [pickerOpen, setPickerOpen] = useState(false);
+
+	useEffect(() => {
+		setDraftName(category.name);
+	}, [category.name]);
+
+	const commit = () => {
+		setEditing(false);
+		const trimmed = draftName.trim();
+		if (trimmed.length > 0 && trimmed !== category.name) onRename(trimmed);
+		else setDraftName(category.name);
+	};
+
+	return (
+		<View style={styles.sheetRow}>
+			<Pressable onPress={onDelete} style={styles.deleteBtn} hitSlop={8}>
+				<Ionicons name="remove-circle" size={22} color={Palette.spent} />
+			</Pressable>
+			<View style={styles.sheetRowSelect}>
+				<View style={styles.categoryRowLeft}>
+					<Pressable onPress={() => setPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
+						<View style={[styles.categoryDot, { backgroundColor: category.color }]} />
+						<View style={styles.editColorBadge}>
+							<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
+						</View>
+					</Pressable>
+					{editing ? (
+						<TextInput
+							style={[styles.sheetRowText, { flex: 1 }]}
+							value={draftName}
+							onChangeText={setDraftName}
+							autoFocus
+							onBlur={commit}
+							onSubmitEditing={commit}
+							returnKeyType="done"
+						/>
+					) : (
+						<Pressable onPress={() => setEditing(true)} style={{ flex: 1 }}>
+							<Text style={styles.sheetRowText}>{category.name}</Text>
+						</Pressable>
+					)}
+				</View>
+				<Pressable onPress={() => setEditing(true)} hitSlop={8} style={{ paddingHorizontal: 6 }}>
+					<Ionicons name="create-outline" size={18} color={Palette.iconMuted} />
+				</Pressable>
+			</View>
+			<ColorPickerModal
+				visible={pickerOpen}
+				initialColor={category.color}
+				title={`Color for ${category.name}`}
+				onClose={() => setPickerOpen(false)}
+				onSelect={onSetColor}
+			/>
+		</View>
+	);
+}
+
+function AddCategoryRow({
+	name,
+	existingColors,
+	onChangeName,
+	onSubmit,
+}: {
+	name: string;
+	existingColors: string[];
+	onChangeName: (s: string) => void;
+	onSubmit: (color: string) => void;
+}) {
+	const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
+	const [pickerOpen, setPickerOpen] = useState(false);
+
+	useEffect(() => {
+		if (!existingColors.includes(color)) return;
+		setColor(pickNextCategoryColor(existingColors));
+	}, [existingColors, color]);
+
+	const canAdd = name.trim().length > 0;
+	const submit = () => {
+		if (!canAdd) return;
+		onSubmit(color);
+		setColor(pickNextCategoryColor([...existingColors, color]));
+	};
+
+	return (
+		<View style={styles.addRow}>
+			<Pressable
+				onPress={() => setPickerOpen(true)}
+				hitSlop={6}
+				style={styles.editColorBtn}
+			>
+				<View style={[styles.categoryDot, { backgroundColor: color }]} />
+				<View style={styles.editColorBadge}>
+					<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
+				</View>
+			</Pressable>
+			<TextInput
+				style={styles.addInput}
+				placeholder="New category name"
+				placeholderTextColor={Palette.iconMuted}
+				value={name}
+				onChangeText={onChangeName}
+				returnKeyType="done"
+				onSubmitEditing={submit}
+			/>
+			<Pressable onPress={submit} disabled={!canAdd} hitSlop={6}>
+				<Ionicons
+					name="add-circle"
+					size={30}
+					color={canAdd ? Palette.brand : Palette.submitDisabled}
+				/>
+			</Pressable>
+			<ColorPickerModal
+				visible={pickerOpen}
+				initialColor={color}
+				title="Pick a color"
+				onClose={() => setPickerOpen(false)}
+				onSelect={setColor}
+			/>
+		</View>
 	);
 }
 

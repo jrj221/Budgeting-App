@@ -43,7 +43,6 @@ export const DEFAULT_CATEGORIES: Category[] = [
 	{ id: "gas", name: "Gas", color: "#f59e0b", weeklyBudgetCents: null, monthlyOverrideCents: null },
 	{ id: "fun", name: "Fun", color: "#a855f7", weeklyBudgetCents: null, monthlyOverrideCents: null },
 	{ id: "bills", name: "Bills", color: "#3b82f6", weeklyBudgetCents: null, monthlyOverrideCents: null },
-	{ id: "work", name: "Work", color: "#10b981", weeklyBudgetCents: null, monthlyOverrideCents: null },
 ];
 
 export const MODE_LABELS: Record<TransactionMode, string> = {

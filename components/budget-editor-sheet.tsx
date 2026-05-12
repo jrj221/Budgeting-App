@@ -22,7 +22,8 @@ import Animated, {
 
 import { Category } from '@/components/add-transaction-card.presenter';
 import { budgetEditorStyles as styles } from '@/components/budget-editor-sheet.styles';
-import { Palette } from '@/constants/colors';
+import { ColorPickerModal } from '@/components/color-picker-modal';
+import { Palette, pickNextCategoryColor } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
 
 const ACCESSORY_ID = 'budget-editor-done';
@@ -41,8 +42,14 @@ export function BudgetEditorSheet({
   tourMode = false,
   onSkip,
 }: BudgetEditorSheetProps) {
-  const { categories, addCategory, deleteCategory, renameCategory, setCategoryBudget } =
-    useCategories();
+  const {
+    categories,
+    addCategory,
+    deleteCategory,
+    renameCategory,
+    setCategoryColor,
+    setCategoryBudget,
+  } = useCategories();
 
   const translateY = useSharedValue(0);
   const baseY = useSharedValue(0);
@@ -117,11 +124,15 @@ export function BudgetEditorSheet({
                   category={cat}
                   onRename={renameCategory}
                   onDelete={deleteCategory}
+                  onSetColor={setCategoryColor}
                   onSetBudget={setCategoryBudget}
                 />
               ))}
 
-              <AddCategoryRow onAdd={(name) => addCategory(name)} />
+              <AddCategoryRow
+                existingColors={categories.map((c) => c.color)}
+                onAdd={(name, color) => addCategory(name, color)}
+              />
             </View>
 
             {tourMode && (
@@ -161,11 +172,13 @@ function CategoryRow({
   category,
   onRename,
   onDelete,
+  onSetColor,
   onSetBudget,
 }: {
   category: Category;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
+  onSetColor: (id: string, color: string) => void;
   onSetBudget: (
     id: string,
     weeklyCents: number | null,
@@ -174,6 +187,7 @@ function CategoryRow({
 }) {
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(category.name);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [weeklyDraft, setWeeklyDraft] = useState(
     category.weeklyBudgetCents != null ? String(Math.round(category.weeklyBudgetCents / 100)) : '',
   );
@@ -258,6 +272,24 @@ function CategoryRow({
         </Pressable>
       </View>
 
+      <View style={styles.colorPreviewRow}>
+        <Pressable
+          style={styles.colorPreviewBtn}
+          onPress={() => setColorPickerOpen(true)}>
+          <View style={[styles.colorPreviewSwatch, { backgroundColor: category.color }]} />
+          <Text style={styles.colorPreviewText}>Change color</Text>
+          <Ionicons name="chevron-forward" size={14} color={Palette.iconMuted} />
+        </Pressable>
+      </View>
+
+      <ColorPickerModal
+        visible={colorPickerOpen}
+        initialColor={category.color}
+        title={`Color for ${category.name}`}
+        onClose={() => setColorPickerOpen(false)}
+        onSelect={(hex) => onSetColor(category.id, hex)}
+      />
+
       <View style={styles.budgetRow}>
         <Text style={styles.budgetLabel}>Weekly</Text>
         <TextInput
@@ -322,35 +354,74 @@ function CategoryRow({
   );
 }
 
-function AddCategoryRow({ onAdd }: { onAdd: (name: string) => unknown }) {
+function AddCategoryRow({
+  existingColors,
+  onAdd,
+}: {
+  existingColors: string[];
+  onAdd: (name: string, color: string) => unknown;
+}) {
   const [name, setName] = useState('');
+  const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+
+  // Re-suggest a color whenever the existing palette shifts (after add/delete) and
+  // the user hasn't manually picked a still-present color.
+  useEffect(() => {
+    if (!existingColors.includes(color)) return;
+    setColor(pickNextCategoryColor(existingColors));
+  }, [existingColors, color]);
+
   const trimmed = name.trim();
   const canAdd = trimmed.length > 0;
 
   const submit = () => {
     if (!canAdd) return;
-    onAdd(trimmed);
+    onAdd(trimmed, color);
     setName('');
+    setColor(pickNextCategoryColor([...existingColors, color]));
   };
 
   return (
-    <View style={styles.addRow}>
-      <Ionicons name="add-circle-outline" size={20} color={Palette.brand} />
+    <View style={styles.addColumn}>
+      <View style={styles.addColumnHeader}>
+        <Ionicons name="add-circle-outline" size={20} color={Palette.brand} />
+        <Text style={styles.addColumnTitle}>Add a category</Text>
+      </View>
       <TextInput
-        style={styles.addInput}
-        placeholder="Add category"
+        style={styles.addColumnInput}
+        placeholder="Category name"
         placeholderTextColor={Palette.iconMuted}
         value={name}
         onChangeText={setName}
         onSubmitEditing={submit}
         returnKeyType="done"
       />
-      <Pressable
-        onPress={submit}
-        disabled={!canAdd}
-        style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}>
-        <Text style={styles.addBtnText}>Add</Text>
-      </Pressable>
+      <View style={styles.colorPreviewRow}>
+        <Pressable
+          style={styles.colorPreviewBtn}
+          onPress={() => setColorPickerOpen(true)}>
+          <View style={[styles.colorPreviewSwatch, { backgroundColor: color }]} />
+          <Text style={styles.colorPreviewText}>Pick color</Text>
+          <Ionicons name="chevron-forward" size={14} color={Palette.iconMuted} />
+        </Pressable>
+      </View>
+      <View style={styles.addColumnFooter}>
+        <Pressable
+          onPress={submit}
+          disabled={!canAdd}
+          style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}>
+          <Text style={styles.addBtnText}>Add</Text>
+        </Pressable>
+      </View>
+
+      <ColorPickerModal
+        visible={colorPickerOpen}
+        initialColor={color}
+        title="Pick a color"
+        onClose={() => setColorPickerOpen(false)}
+        onSelect={setColor}
+      />
     </View>
   );
 }
