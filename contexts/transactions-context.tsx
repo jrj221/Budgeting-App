@@ -11,6 +11,7 @@ type TransactionsContextValue = {
   updateTransactionAndFuture: (id: string, patch: TransactionPatch) => void;
   deleteTransaction: (id: string) => void;
   deleteTransactionAndFuture: (id: string) => void;
+  replaceAll: (txs: Transaction[]) => void;
   clearAll: () => void;
 };
 
@@ -77,6 +78,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const replaceAll = useCallback((txs: Transaction[]) => setTransactions(txs), []);
+
   const clearAll = useCallback(() => setTransactions([]), []);
 
   const value = useMemo(
@@ -87,6 +90,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       updateTransactionAndFuture,
       deleteTransaction,
       deleteTransactionAndFuture,
+      replaceAll,
       clearAll,
     }),
     [
@@ -96,6 +100,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       updateTransactionAndFuture,
       deleteTransaction,
       deleteTransactionAndFuture,
+      replaceAll,
       clearAll,
     ],
   );

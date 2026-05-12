@@ -27,20 +27,20 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AppThemeProvider>
           <OnboardingProvider>
-            <TourProvider>
-              <CategoriesProvider>
-                <TransactionsProvider>
-                  <GoalsProvider>
+            <CategoriesProvider>
+              <TransactionsProvider>
+                <GoalsProvider>
+                  <TourProvider>
                     <Stack>
                       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     </Stack>
                     <StatusBar style="auto" />
                     <TourOverlay />
                     <WelcomeGate />
-                  </GoalsProvider>
-                </TransactionsProvider>
-              </CategoriesProvider>
-            </TourProvider>
+                  </TourProvider>
+                </GoalsProvider>
+              </TransactionsProvider>
+            </CategoriesProvider>
           </OnboardingProvider>
         </AppThemeProvider>
       </ThemeProvider>

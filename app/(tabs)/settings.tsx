@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '@/app/(tabs)/settings.styles';
 import { Palette } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
+import { useGoals } from '@/contexts/goals-context';
 import { useOnboarding } from '@/contexts/onboarding-context';
 import { useAppTheme } from '@/contexts/theme-context';
 import { useTransactions } from '@/contexts/transactions-context';
@@ -17,6 +18,7 @@ export default function SettingsScreen() {
   const { scheme: current, schemes, setSchemeId } = useAppTheme();
   const { transactions, addTransactions, clearAll } = useTransactions();
   const { setCategoryBudget } = useCategories();
+  const { clearAll: clearAllGoals } = useGoals();
   const { resetWelcome } = useOnboarding();
 
   const onLoadSample = () => {
@@ -48,6 +50,7 @@ export default function SettingsScreen() {
           text: 'Reset',
           style: 'destructive',
           onPress: async () => {
+            clearAllGoals();
             clearAll();
             await resetWelcome();
           },

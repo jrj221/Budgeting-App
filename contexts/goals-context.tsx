@@ -16,6 +16,8 @@ type GoalsContextValue = {
   deleteGoal: (id: string) => void;
   contributeToGoal: (id: string, cents: number) => void;
   withdrawFromGoal: (id: string, cents: number) => void;
+  replaceAll: (gs: Goal[]) => void;
+  clearAll: () => void;
   getGoalByCategory: (categoryId: string | null) => Goal | null;
 };
 
@@ -133,6 +135,15 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     [goals, addTransactions],
   );
 
+  const replaceAll = useCallback((gs: Goal[]) => setGoals(gs), []);
+
+  const clearAll = useCallback(() => {
+    setGoals((current) => {
+      for (const g of current) deleteCategory(g.categoryId);
+      return [];
+    });
+  }, [deleteCategory]);
+
   const getGoalByCategory = useCallback(
     (categoryId: string | null) => {
       if (!categoryId) return null;
@@ -149,6 +160,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       deleteGoal,
       contributeToGoal,
       withdrawFromGoal,
+      replaceAll,
+      clearAll,
       getGoalByCategory,
     }),
     [
@@ -158,6 +171,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       deleteGoal,
       contributeToGoal,
       withdrawFromGoal,
+      replaceAll,
+      clearAll,
       getGoalByCategory,
     ],
   );

@@ -19,6 +19,7 @@ type CategoriesContextValue = {
     weeklyCents: number | null,
     monthlyOverrideCents: number | null,
   ) => void;
+  replaceAll: (cats: Category[]) => void;
   getCategory: (id: string | null) => Category | null;
 };
 
@@ -76,6 +77,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const replaceAll = useCallback((cats: Category[]) => setCategories(cats), []);
+
   const getCategory = useCallback(
     (id: string | null) => (id ? categories.find((c) => c.id === id) ?? null : null),
     [categories],
@@ -89,6 +92,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       renameCategory,
       setCategoryColor,
       setCategoryBudget,
+      replaceAll,
       getCategory,
     }),
     [
@@ -98,6 +102,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       renameCategory,
       setCategoryColor,
       setCategoryBudget,
+      replaceAll,
       getCategory,
     ],
   );

@@ -39,7 +39,10 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
 
   const progress = computeGoalProgress(transactions, goal.categoryId, goal.targetCents);
   const elapsed = weeksSince(goal.createdAt);
-  const expectedNet = goal.weeklyContributionCents * elapsed;
+  // Only count COMPLETED weeks for pace — a brand-new goal isn't behind during
+  // its first week.
+  const completedWeeks = Math.floor(elapsed);
+  const expectedNet = goal.weeklyContributionCents * completedWeeks;
   const isComplete = progress.netCents >= goal.targetCents && goal.targetCents > 0;
   const onPace = progress.netCents >= expectedNet;
   const weeksLeft = Math.max(
@@ -55,7 +58,7 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
 
   const refundCents = Math.max(0, progress.netCents);
   const remainingTargetCents = Math.max(0, goal.targetCents - progress.netCents);
-  const remainingPlannedWeeks = Math.max(0, goal.weeksTarget - elapsed);
+  const remainingPlannedWeeks = Math.max(0, goal.weeksTarget - completedWeeks);
   const weeksAtPlannedRate =
     goal.weeklyContributionCents > 0
       ? Math.ceil(remainingTargetCents / goal.weeklyContributionCents)
