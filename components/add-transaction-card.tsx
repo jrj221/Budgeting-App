@@ -308,6 +308,12 @@ function CategorySheet(props: CategorySheetProps) {
 											<View style={styles.categoryRowLeft}>
 												<View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
 												<Text style={styles.sheetRowText}>{cat.name}</Text>
+												{cat.isGoal && (
+													<View style={{ flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: cat.color }}>
+														<Ionicons name="flag" size={10} color="#fff" />
+														<Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Goal</Text>
+													</View>
+												)}
 											</View>
 											{props.selectedId === cat.id && (
 												<Ionicons name="checkmark" size={20} color={Palette.brand} />

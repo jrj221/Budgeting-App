@@ -30,6 +30,7 @@ export function BudgetCard({ onOpenEditor }: BudgetCardProps) {
 
   const items = useMemo(() => {
     return categories
+      .filter((c) => !c.isGoal)
       .map((cat) => {
         const budget = effectiveBudgetCents(cat, window);
         if (budget <= 0) return null;

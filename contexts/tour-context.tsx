@@ -20,16 +20,23 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     kind: 'tap-tab',
+    title: 'Tap Goals',
+    body: 'Save toward a target. Each goal makes its own category — contribute as an expense, withdraw as income. Pick a deadline or a weekly amount and we work out the other.',
+    tabIndex: 2,
+    expectedPath: '/goals',
+  },
+  {
+    kind: 'tap-tab',
     title: 'Tap History',
     body: 'Every past and upcoming transaction. Tap any row to edit or delete it.',
-    tabIndex: 2,
+    tabIndex: 3,
     expectedPath: '/history',
   },
   {
     kind: 'tap-tab',
     title: 'Tap Settings',
     body: 'Color schemes, sample data, and reset.',
-    tabIndex: 3,
+    tabIndex: 4,
     expectedPath: '/settings',
   },
   {

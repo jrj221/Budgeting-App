@@ -1,0 +1,211 @@
+import { StyleSheet } from 'react-native';
+
+import { Palette } from '@/constants/colors';
+
+export const goalCardStyles = StyleSheet.create({
+  card: {
+    backgroundColor: Palette.cardBackground,
+    borderRadius: 20,
+    padding: 16,
+    gap: 12,
+    shadowColor: Palette.shadow,
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    elevation: 2,
+    borderTopWidth: 3,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: '#fff',
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Palette.text,
+    flex: 1,
+  },
+  iconBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+  },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  saved: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Palette.text,
+  },
+  target: {
+    fontSize: 14,
+    color: Palette.textMuted,
+  },
+  weekly: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Palette.text,
+  },
+  pace: {
+    fontSize: 12,
+    color: Palette.textMuted,
+  },
+  paceComplete: {
+    color: Palette.earned,
+    fontWeight: '600',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  contribute: {
+    backgroundColor: Palette.brand,
+  },
+  contributeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  withdraw: {
+    backgroundColor: Palette.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
+  },
+  withdrawText: {
+    color: Palette.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  amountInputModalRoot: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  amountInputCard: {
+    backgroundColor: Palette.cardBackground,
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 360,
+    gap: 14,
+  },
+  amountInputTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Palette.text,
+    textAlign: 'center',
+  },
+  amountInputBody: {
+    fontSize: 13,
+    color: Palette.textMuted,
+    textAlign: 'center',
+  },
+  amountInputWrap: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: Palette.surface,
+    borderRadius: 12,
+  },
+  amountInputText: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: Palette.text,
+    letterSpacing: -1,
+  },
+  amountInputMuted: {
+    color: Palette.amountPlaceholder,
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    height: 1,
+    width: 1,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  primaryBtn: {
+    flex: 1,
+    backgroundColor: Palette.brand,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignItems: 'center',
+  },
+  primaryDisabled: {
+    backgroundColor: Palette.submitDisabled,
+  },
+  primaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  secondaryBtn: {
+    flex: 1,
+    backgroundColor: Palette.surface,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
+  },
+  secondaryText: {
+    color: Palette.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  amountAccessory: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    backgroundColor: Palette.toggleTrack,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Palette.border,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  amountAccessoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  amountAccessoryText: {
+    fontSize: 16,
+    color: Palette.brand,
+    fontWeight: '600',
+  },
+});

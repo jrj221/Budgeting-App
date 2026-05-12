@@ -118,16 +118,18 @@ export function BudgetEditorSheet({
             </Text>
 
             <View style={styles.list}>
-              {categories.map((cat) => (
-                <CategoryRow
-                  key={cat.id}
-                  category={cat}
-                  onRename={renameCategory}
-                  onDelete={deleteCategory}
-                  onSetColor={setCategoryColor}
-                  onSetBudget={setCategoryBudget}
-                />
-              ))}
+              {categories
+                .filter((c) => !c.isGoal)
+                .map((cat) => (
+                  <CategoryRow
+                    key={cat.id}
+                    category={cat}
+                    onRename={renameCategory}
+                    onDelete={deleteCategory}
+                    onSetColor={setCategoryColor}
+                    onSetBudget={setCategoryBudget}
+                  />
+                ))}
 
               <AddCategoryRow
                 existingColors={categories.map((c) => c.color)}
@@ -248,7 +250,15 @@ function CategoryRow({
   return (
     <View style={styles.catRow}>
       <View style={styles.catRowTop}>
-        <View style={[styles.catDot, { backgroundColor: category.color }]} />
+        <Pressable
+          onPress={() => setColorPickerOpen(true)}
+          hitSlop={6}
+          style={styles.editColorBtn}>
+          <View style={[styles.catDot, { backgroundColor: category.color }]} />
+          <View style={styles.editColorBadge}>
+            <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
+          </View>
+        </Pressable>
         {editingName ? (
           <TextInput
             style={styles.catNameInput}
@@ -269,16 +279,6 @@ function CategoryRow({
           onPress={() => onDelete(category.id)}
           hitSlop={6}>
           <Ionicons name="trash-outline" size={18} color={Palette.spent} />
-        </Pressable>
-      </View>
-
-      <View style={styles.colorPreviewRow}>
-        <Pressable
-          style={styles.colorPreviewBtn}
-          onPress={() => setColorPickerOpen(true)}>
-          <View style={[styles.colorPreviewSwatch, { backgroundColor: category.color }]} />
-          <Text style={styles.colorPreviewText}>Change color</Text>
-          <Ionicons name="chevron-forward" size={14} color={Palette.iconMuted} />
         </Pressable>
       </View>
 
@@ -385,7 +385,15 @@ function AddCategoryRow({
   return (
     <View style={styles.addColumn}>
       <View style={styles.addColumnHeader}>
-        <Ionicons name="add-circle-outline" size={20} color={Palette.brand} />
+        <Pressable
+          onPress={() => setColorPickerOpen(true)}
+          hitSlop={6}
+          style={styles.editColorBtn}>
+          <View style={[styles.catDot, { backgroundColor: color }]} />
+          <View style={styles.editColorBadge}>
+            <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
+          </View>
+        </Pressable>
         <Text style={styles.addColumnTitle}>Add a category</Text>
       </View>
       <TextInput
@@ -397,15 +405,6 @@ function AddCategoryRow({
         onSubmitEditing={submit}
         returnKeyType="done"
       />
-      <View style={styles.colorPreviewRow}>
-        <Pressable
-          style={styles.colorPreviewBtn}
-          onPress={() => setColorPickerOpen(true)}>
-          <View style={[styles.colorPreviewSwatch, { backgroundColor: color }]} />
-          <Text style={styles.colorPreviewText}>Pick color</Text>
-          <Ionicons name="chevron-forward" size={14} color={Palette.iconMuted} />
-        </Pressable>
-      </View>
       <View style={styles.addColumnFooter}>
         <Pressable
           onPress={submit}

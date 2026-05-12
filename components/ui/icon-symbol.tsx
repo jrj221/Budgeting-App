@@ -21,6 +21,7 @@ const MAPPING = {
   'clock.fill': 'history',
   'chart.pie.fill': 'pie-chart',
   'gearshape.fill': 'settings',
+  'flag.fill': 'flag',
 } as IconMapping;
 
 /**

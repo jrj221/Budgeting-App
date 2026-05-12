@@ -54,11 +54,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="goals"
+        options={{
+          title: 'Goals',
+          tabBarIcon: ({ color }) => (
+            <TourAwareTabIcon color={color} name="flag.fill" tabIndex={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'History',
           tabBarIcon: ({ color }) => (
-            <TourAwareTabIcon color={color} name="clock.fill" tabIndex={2} />
+            <TourAwareTabIcon color={color} name="clock.fill" tabIndex={3} />
           ),
         }}
       />
@@ -67,7 +76,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color }) => (
-            <TourAwareTabIcon color={color} name="gearshape.fill" tabIndex={3} />
+            <TourAwareTabIcon color={color} name="gearshape.fill" tabIndex={4} />
           ),
         }}
       />

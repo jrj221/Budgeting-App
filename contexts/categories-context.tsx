@@ -10,7 +10,7 @@ import { pickNextCategoryColor } from '@/constants/colors';
 
 type CategoriesContextValue = {
   categories: Category[];
-  addCategory: (name: string, color?: string) => Category | null;
+  addCategory: (name: string, color?: string, isGoal?: boolean) => Category | null;
   deleteCategory: (id: string) => void;
   renameCategory: (id: string, name: string) => void;
   setCategoryColor: (id: string, color: string) => void;
@@ -27,16 +27,19 @@ const CategoriesContext = createContext<CategoriesContextValue | null>(null);
 export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
 
-  const addCategory = useCallback((name: string, color?: string): Category | null => {
-    let created: Category | null = null;
-    setCategories((existing) => {
-      if (!isCategoryNameValid(name, existing)) return existing;
-      const finalColor = color ?? pickNextCategoryColor(existing.map((c) => c.color));
-      created = createCategory(name, finalColor);
-      return [...existing, created];
-    });
-    return created;
-  }, []);
+  const addCategory = useCallback(
+    (name: string, color?: string, isGoal = false): Category | null => {
+      let created: Category | null = null;
+      setCategories((existing) => {
+        if (!isCategoryNameValid(name, existing)) return existing;
+        const finalColor = color ?? pickNextCategoryColor(existing.map((c) => c.color));
+        created = createCategory(name, finalColor, isGoal);
+        return [...existing, created];
+      });
+      return created;
+    },
+    [],
+  );
 
   const deleteCategory = useCallback((id: string) => {
     setCategories((existing) => existing.filter((c) => c.id !== id));

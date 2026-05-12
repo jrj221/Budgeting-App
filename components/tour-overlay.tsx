@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tourStyles as styles } from '@/components/tour-overlay.styles';
 import { TOUR_STEPS, useTour } from '@/contexts/tour-context';
 
-const TAB_COUNT = 4;
+const TAB_COUNT = 5;
 const TAB_BAR_CONTENT_HEIGHT = 49;
 
 export function TourOverlay() {

@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { TourOverlay } from '@/components/tour-overlay';
 import { WelcomeScreen } from '@/components/welcome-screen';
 import { CategoriesProvider } from '@/contexts/categories-context';
+import { GoalsProvider } from '@/contexts/goals-context';
 import { OnboardingProvider, useOnboarding } from '@/contexts/onboarding-context';
 import { AppThemeProvider } from '@/contexts/theme-context';
 import { TourProvider } from '@/contexts/tour-context';
@@ -29,12 +30,14 @@ export default function RootLayout() {
             <TourProvider>
               <CategoriesProvider>
                 <TransactionsProvider>
-                  <Stack>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  </Stack>
-                  <StatusBar style="auto" />
-                  <TourOverlay />
-                  <WelcomeGate />
+                  <GoalsProvider>
+                    <Stack>
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    </Stack>
+                    <StatusBar style="auto" />
+                    <TourOverlay />
+                    <WelcomeGate />
+                  </GoalsProvider>
                 </TransactionsProvider>
               </CategoriesProvider>
             </TourProvider>
