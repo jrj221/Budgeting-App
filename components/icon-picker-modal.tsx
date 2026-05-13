@@ -12,6 +12,7 @@ import {
 
 import { CATEGORY_ICONS } from '@/constants/category-icons';
 import { Palette } from '@/constants/colors';
+import { useAppTheme } from '@/contexts/theme-context';
 
 type IconPickerModalProps = {
   visible: boolean;
@@ -33,6 +34,7 @@ export function IconPickerModal({
   onClose,
   onSelect,
 }: IconPickerModalProps) {
+  const { scheme } = useAppTheme();
   const [query, setQuery] = useState('');
 
   const filtered = query.trim()
@@ -47,10 +49,10 @@ export function IconPickerModal({
       onRequestClose={onClose}
       statusBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => {}}>
-          <Text style={styles.title}>{title}</Text>
+        <Pressable style={[styles.card, { backgroundColor: scheme.surface }]} onPress={() => {}}>
+          <Text style={[styles.title, { color: scheme.text }]}>{title}</Text>
           <TextInput
-            style={styles.search}
+            style={[styles.search, { backgroundColor: scheme.surface, color: scheme.text, borderColor: scheme.border }]}
             placeholder="Search icons…"
             placeholderTextColor={Palette.iconMuted}
             value={query}
@@ -73,18 +75,18 @@ export function IconPickerModal({
                     onSelect(item);
                     onClose();
                   }}
-                  style={[styles.cell, active && { backgroundColor: color + '22', borderColor: color, borderWidth: 2 }]}>
+                  style={[styles.cell, { backgroundColor: scheme.surface, borderColor: scheme.border }, active && { backgroundColor: color + '22', borderColor: color, borderWidth: 2 }]}>
                   <FontAwesome5
                     name={item as any}
                     size={22}
-                    color={active ? color : Palette.text}
+                    color={active ? color : scheme.text}
                   solid />
                 </Pressable>
               );
             }}
           />
           <Pressable style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={[styles.cancelText, { color: scheme.textMuted }]}>Cancel</Text>
           </Pressable>
         </Pressable>
       </Pressable>

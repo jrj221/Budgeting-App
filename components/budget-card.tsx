@@ -12,6 +12,7 @@ import { BudgetProgressBar } from '@/components/budget-progress-bar';
 import { Palette, paleColor } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
 import { useTransactions } from '@/contexts/transactions-context';
+import { useAppTheme } from '@/contexts/theme-context';
 import { BudgetWindow, computeUsage } from '@/utils/budget-calc';
 
 type BudgetCardProps = {
@@ -26,6 +27,7 @@ const TOGGLE_LABELS: Record<BudgetWindow, string> = {
 export function BudgetCard({ onOpenEditor }: BudgetCardProps) {
   const { categories } = useCategories();
   const { transactions } = useTransactions();
+  const { scheme } = useAppTheme();
   const [window, setWindow] = useState<BudgetWindow>('week');
 
   const items = useMemo(() => {
@@ -41,22 +43,22 @@ export function BudgetCard({ onOpenEditor }: BudgetCardProps) {
   }, [categories, transactions, window]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: scheme.cardBackground }]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>Budget</Text>
-          <Text style={styles.subtitle}>How much room you have left.</Text>
+          <Text style={[styles.title, { color: scheme.text }]}>Budget</Text>
+          <Text style={[styles.subtitle, { color: scheme.textMuted }]}>How much room you have left.</Text>
         </View>
 
-        <View style={styles.toggle}>
+        <View style={[styles.toggle, { backgroundColor: scheme.toggleTrack }]}>
           {(Object.keys(TOGGLE_LABELS) as BudgetWindow[]).map((w) => {
             const active = window === w;
             return (
               <Pressable
                 key={w}
                 onPress={() => setWindow(w)}
-                style={[styles.toggleBtn, active && styles.toggleBtnActive]}>
-                <Text style={[styles.toggleText, active && styles.toggleTextActive]}>
+                style={[styles.toggleBtn, active && [styles.toggleBtnActive, { backgroundColor: scheme.cardBackground }]]}>
+                <Text style={[styles.toggleText, { color: scheme.textMuted }, active && [styles.toggleTextActive, { color: scheme.text }]]}>
                   {TOGGLE_LABELS[w]}
                 </Text>
               </Pressable>
@@ -64,15 +66,15 @@ export function BudgetCard({ onOpenEditor }: BudgetCardProps) {
           })}
         </View>
 
-        <Pressable onPress={onOpenEditor} style={styles.plusBtn} hitSlop={6}>
-          <Ionicons name="add" size={20} color={Palette.text} />
+        <Pressable onPress={onOpenEditor} style={[styles.plusBtn, { backgroundColor: scheme.surface, borderColor: scheme.border }]} hitSlop={6}>
+          <Ionicons name="add" size={20} color={scheme.text} />
         </Pressable>
       </View>
 
       {items.length === 0 ? (
         <View style={styles.empty}>
-          <Ionicons name="wallet-outline" size={26} color={Palette.iconMuted} />
-          <Text style={styles.emptyText}>
+          <Ionicons name="wallet-outline" size={26} color={scheme.textMuted} />
+          <Text style={[styles.emptyText, { color: scheme.textMuted }]}>
             No budgets set yet. Tap the + to choose how much you want to spend per category.
           </Text>
           <Pressable onPress={onOpenEditor} style={styles.emptyCta}>
@@ -86,12 +88,12 @@ export function BudgetCard({ onOpenEditor }: BudgetCardProps) {
           ))}
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendSwatch, { backgroundColor: Palette.text }]} />
-              <Text style={styles.legendText}>Spent</Text>
+              <View style={[styles.legendSwatch, { backgroundColor: scheme.text }]} />
+              <Text style={[styles.legendText, { color: scheme.textMuted }]}>Spent</Text>
             </View>
             <View style={styles.legendItem}>
               <StripesSwatch />
-              <Text style={styles.legendText}>Planned</Text>
+              <Text style={[styles.legendText, { color: scheme.textMuted }]}>Planned</Text>
             </View>
           </View>
         </View>
@@ -111,6 +113,7 @@ function BudgetRow({
   actualCents: number;
   plannedCents: number;
 }) {
+  const { scheme } = useAppTheme();
   const actualFraction = budget > 0 ? actualCents / budget : 0;
   const plannedFraction = budget > 0 ? plannedCents / budget : 0;
   const projectedTotal = actualCents + plannedCents;
@@ -137,9 +140,9 @@ function BudgetRow({
           <View style={[styles.dot, { backgroundColor: cat.color + '22', alignItems: 'center', justifyContent: 'center' }]}>
               <FontAwesome5 name={cat.icon as any} size={12} color={cat.color} solid />
             </View>
-          <Text style={styles.rowName}>{cat.name}</Text>
+          <Text style={[styles.rowName, { color: scheme.text }]}>{cat.name}</Text>
         </View>
-        <Text style={[styles.rowAmounts, overBudget && styles.rowAmountsOver]}>
+        <Text style={[styles.rowAmounts, { color: scheme.text }, overBudget && styles.rowAmountsOver]}>
           {formatCentsDisplay(actualCents)} / {formatCentsDisplay(budget)}
         </Text>
       </View>
@@ -150,7 +153,7 @@ function BudgetRow({
         plannedFraction={plannedFraction}
         patternKey={cat.id}
       />
-      <Text style={styles.rowMeta}>{metaText}</Text>
+      <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{metaText}</Text>
     </View>
   );
 }

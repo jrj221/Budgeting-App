@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tourStyles as styles } from "@/components/tour-overlay.styles";
 import { TOUR_STEPS, useTour } from "@/contexts/tour-context";
+import { useAppTheme } from "@/contexts/theme-context";
 
 const TAB_COUNT = 5;
 const TAB_BAR_CONTENT_HEIGHT = 49;
@@ -27,6 +28,7 @@ function computeDisplayStep(stepIdx: number): number {
 }
 
 export function TourOverlay() {
+	const { scheme } = useAppTheme();
 	const { stepIndex, advance, skip } = useTour();
 	const pathname = usePathname();
 	const insets = useSafeAreaInsets();
@@ -56,7 +58,7 @@ export function TourOverlay() {
 			<View style={styles.fill} pointerEvents="auto">
 				<Pressable style={[styles.fill, { backgroundColor: "rgba(15, 23, 42, 0.25)" }]} />
 				<View style={styles.centerWrap} pointerEvents="box-none">
-					<View style={styles.card}>
+					<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
 						<Text style={styles.cardEyebrow}>
 							Step {stepNumber} of {TOTAL_INFO_STEPS}
 						</Text>
@@ -159,7 +161,7 @@ export function TourOverlay() {
 					width: tooltipMaxWidth,
 				}}
 			>
-				<View style={styles.tooltip}>
+				<View style={[styles.tooltip, { backgroundColor: scheme.cardBackground }]}>
 					<Text style={styles.tooltipTitle}>{step.title}</Text>
 					<Text style={styles.tooltipBody}>{step.body}</Text>
 					<View style={styles.tooltipFooter}>

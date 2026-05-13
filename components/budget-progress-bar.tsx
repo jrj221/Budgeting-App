@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
-import Svg, { ClipPath, Defs, G, Line, Rect } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Line, Rect } from 'react-native-svg';
 
 type BudgetProgressBarProps = {
   color: string;
@@ -10,6 +10,8 @@ type BudgetProgressBarProps = {
   actualFraction: number;
   /** 0..1 fraction filled by future-planned spending (stacks on top of actual). */
   plannedFraction: number;
+  /** 0..1 position of a pace marker line (e.g. where the user should be right now). */
+  paceMarkerFraction?: number;
   height?: number;
   patternKey: string;
 };
@@ -19,6 +21,7 @@ export function BudgetProgressBar({
   backgroundColor,
   actualFraction,
   plannedFraction,
+  paceMarkerFraction,
   height = 14,
   patternKey,
 }: BudgetProgressBarProps) {
@@ -75,6 +78,32 @@ export function BudgetProgressBar({
               ))}
             </G>
           )}
+          {paceMarkerFraction != null && width > 0 && (() => {
+            const markerX = clamp01(paceMarkerFraction) * width;
+            const r = height / 2 + 1;
+            return (
+              <>
+                <Line
+                  x1={markerX}
+                  y1={0}
+                  x2={markerX}
+                  y2={height}
+                  stroke="#fff"
+                  strokeWidth={2.5}
+                  strokeDasharray="3,2"
+                />
+                <Circle
+                  cx={markerX}
+                  cy={height / 2}
+                  r={r}
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth={2}
+                  strokeOpacity={0.85}
+                />
+              </>
+            );
+          })()}
         </Svg>
       )}
     </View>

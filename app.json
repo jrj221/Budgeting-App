@@ -1,38 +1,36 @@
 {
   "expo": {
-    "name": "Budget",
-    "slug": "Budget",
+    "name": "Money & Me",
+    "slug": "budget-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "budget",
+    "icon": "./assets/images/app_icon.png",
+    "scheme": "com.jrj.budget",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Budget"
+      "bundleIdentifier": "com.jrj.budget",
+      "buildNumber": "1",
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": []
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/app_icon.png",
+        "backgroundColor": "#E6F4FE"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Budget"
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "package": "com.jrj.budget",
+      "versionCode": 1
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/app_splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -46,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fa596d68-21c2-4086-b5fa-c9e6ea1e6e44"
+      }
     }
   }
 }

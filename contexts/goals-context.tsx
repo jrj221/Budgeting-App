@@ -17,7 +17,9 @@ type GoalsContextValue = {
   addGoal: (draft: GoalDraft) => Goal | null;
   updateGoal: (id: string, draft: GoalDraft) => Goal | null;
   deleteGoal: (id: string) => void;
+  completeGoal: (id: string) => void;
   contributeToGoal: (id: string, cents: number) => void;
+  contributeSeriestoGoal: (id: string, txs: Transaction[]) => void;
   withdrawFromGoal: (id: string, cents: number) => void;
   replaceAll: (gs: Goal[]) => void;
   clearAll: () => void;
@@ -143,6 +145,16 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     [goals, transactions, addTransactions, deleteCategory],
   );
 
+  const completeGoal = useCallback(
+    (id: string) => {
+      const goal = goals.find((g) => g.id === id);
+      if (!goal) return;
+      setGoals((g) => g.filter((x) => x.id !== id));
+      deleteCategory(goal.categoryId);
+    },
+    [goals, deleteCategory],
+  );
+
   const contributeToGoal = useCallback(
     (id: string, cents: number) => {
       const goal = goals.find((g) => g.id === id);
@@ -159,6 +171,14 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       addTransactions([tx]);
     },
     [goals, addTransactions],
+  );
+
+  const contributeSeriestoGoal = useCallback(
+    (id: string, txs: Transaction[]) => {
+      if (txs.length === 0) return;
+      addTransactions(txs);
+    },
+    [addTransactions],
   );
 
   const withdrawFromGoal = useCallback(
@@ -203,7 +223,9 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       addGoal,
       updateGoal,
       deleteGoal,
+      completeGoal,
       contributeToGoal,
+      contributeSeriestoGoal,
       withdrawFromGoal,
       replaceAll,
       clearAll,
@@ -215,7 +237,9 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       addGoal,
       updateGoal,
       deleteGoal,
+      completeGoal,
       contributeToGoal,
+      contributeSeriestoGoal,
       withdrawFromGoal,
       replaceAll,
       clearAll,

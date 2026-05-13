@@ -91,28 +91,28 @@ export default function OverviewScreen() {
 					</Text>
 				</View>
 
-				<View style={styles.balanceCard}>
+				<View style={[styles.balanceCard, { backgroundColor: scheme.cardBackground }]}>
 					<View style={styles.balanceHeaderRow}>
-						<Text style={styles.balanceLabel}>Current balance</Text>
-						<Pressable onPress={showBalanceInfo} hitSlop={8} style={styles.infoBtn}>
-							<Ionicons name="information" size={13} color={Palette.iconMuted} />
+						<Text style={[styles.balanceLabel, { color: scheme.textMuted }]}>Current balance</Text>
+						<Pressable onPress={showBalanceInfo} hitSlop={8} style={[styles.infoBtn, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+							<Ionicons name="information" size={13} color={scheme.textMuted} />
 						</Pressable>
 					</View>
-					<Text style={[styles.balanceAmount, balanceCents < 0 && styles.balanceAmountNeg]}>
+					<Text style={[styles.balanceAmount, { color: scheme.text }, balanceCents < 0 && styles.balanceAmountNeg]}>
 						{balanceCents < 0
 							? `-${formatCentsDisplay(Math.abs(balanceCents))}`
 							: formatCentsDisplay(balanceCents)}
 					</Text>
-					<Text style={styles.balanceSub}>
+					<Text style={[styles.balanceSub, { color: scheme.textMuted }]}>
 						Starting balance plus completed transactions you&apos;ve logged.
 					</Text>
 				</View>
 
 				<BudgetCard onOpenEditor={() => setBudgetEditorOpen(true)} />
 
-				<View style={chartStyles.container}>
-					<Text style={chartStyles.title}>Projected balance</Text>
-					<Text style={chartStyles.subtitle}>Running total of future earnings and expenses.</Text>
+				<View style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}>
+					<Text style={[chartStyles.title, { color: scheme.text }]}>Projected balance</Text>
+					<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>Running total of future earnings and expenses.</Text>
 					{lineData.points.length > 1 ? (
 						<LineChart
 							data={lineData.points}
@@ -129,21 +129,21 @@ export default function OverviewScreen() {
 						/>
 					) : (
 						<View style={chartStyles.empty}>
-							<Ionicons name="trending-up-outline" size={28} color={Palette.iconMuted} />
-							<Text style={chartStyles.emptyText}>Schedule future transactions to see a projection.</Text>
+							<Ionicons name="trending-up-outline" size={28} color={scheme.textMuted} />
+							<Text style={[chartStyles.emptyText, { color: scheme.textMuted }]}>Schedule future transactions to see a projection.</Text>
 						</View>
 					)}
 				</View>
 
-				<View style={chartStyles.container}>
+				<View style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}>
 					<View style={chartStyles.headerRow}>
 						<View style={chartStyles.headerLeft}>
-							<Text style={chartStyles.title}>Spending by category</Text>
-							<Text style={chartStyles.subtitle}>Past expenses, grouped.</Text>
+							<Text style={[chartStyles.title, { color: scheme.text }]}>Spending by category</Text>
+							<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>Past expenses, grouped.</Text>
 						</View>
-						<Pressable onPress={() => setFilterOpen(true)} style={chartStyles.filterButton}>
-							<Text style={chartStyles.filterText}>{filterLabel(pieFilter)}</Text>
-							<Ionicons name="chevron-down" size={14} color={Palette.iconMuted} />
+						<Pressable onPress={() => setFilterOpen(true)} style={[chartStyles.filterButton, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+							<Text style={[chartStyles.filterText, { color: scheme.textMuted }]}>{filterLabel(pieFilter)}</Text>
+							<Ionicons name="chevron-down" size={14} color={scheme.textMuted} />
 						</Pressable>
 					</View>
 
@@ -156,18 +156,18 @@ export default function OverviewScreen() {
 									innerRatio={0.55}
 									formatValue={(v) => formatCentsDisplay(v)}
 								/>
-								<Text style={styles.totalLabel}>Total</Text>
-								<Text style={styles.totalAmount}>{formatCentsDisplay(totalSpent)}</Text>
+								<Text style={[styles.totalLabel, { color: scheme.textMuted }]}>Total</Text>
+								<Text style={[styles.totalAmount, { color: scheme.text }]}>{formatCentsDisplay(totalSpent)}</Text>
 							</View>
 							<View style={chartStyles.legend}>
 								{pieData.map((slice) => (
 									<View key={slice.key} style={chartStyles.legendRow}>
 										<View style={chartStyles.legendLeft}>
 											<View style={[chartStyles.legendDot, { backgroundColor: slice.color }]} />
-											<Text style={chartStyles.legendName}>{slice.label}</Text>
+											<Text style={[chartStyles.legendName, { color: scheme.text }]}>{slice.label}</Text>
 										</View>
-										<Text style={chartStyles.legendValue}>{formatCentsDisplay(slice.value)}</Text>
-										<Text style={chartStyles.legendPercent}>
+										<Text style={[chartStyles.legendValue, { color: scheme.text }]}>{formatCentsDisplay(slice.value)}</Text>
+										<Text style={[chartStyles.legendPercent, { color: scheme.textMuted }]}>
 											{((slice.value / totalSpent) * 100).toFixed(0)}%
 										</Text>
 									</View>
@@ -176,8 +176,8 @@ export default function OverviewScreen() {
 						</>
 					) : (
 						<View style={chartStyles.empty}>
-							<Ionicons name="pie-chart-outline" size={28} color={Palette.iconMuted} />
-							<Text style={chartStyles.emptyText}>No expenses {filterEmptyHint(pieFilter)}.</Text>
+							<Ionicons name="pie-chart-outline" size={28} color={scheme.textMuted} />
+							<Text style={[chartStyles.emptyText, { color: scheme.textMuted }]}>No expenses {filterEmptyHint(pieFilter)}.</Text>
 						</View>
 					)}
 				</View>
@@ -208,11 +208,12 @@ type FilterMenuProps = {
 };
 
 function FilterMenu({ visible, options, current, onSelect, onClose }: FilterMenuProps) {
+	const { scheme } = useAppTheme();
 	const currentId = filterId(current);
 	return (
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
 			<Pressable style={chartStyles.menuOverlay} onPress={onClose}>
-				<Pressable style={chartStyles.menuCard} onPress={() => {}}>
+				<Pressable style={[chartStyles.menuCard, { backgroundColor: scheme.cardBackground }]} onPress={() => {}}>
 					<ScrollView style={chartStyles.menuScroll}>
 						{options.map((opt) => {
 							const active = opt.id === currentId;
@@ -220,9 +221,9 @@ function FilterMenu({ visible, options, current, onSelect, onClose }: FilterMenu
 								<Pressable
 									key={opt.id}
 									onPress={() => onSelect(opt.filter)}
-									style={chartStyles.menuRow}
+									style={[chartStyles.menuRow, { borderBottomColor: scheme.border }]}
 								>
-									<Text style={chartStyles.menuRowText}>{opt.label}</Text>
+									<Text style={[chartStyles.menuRowText, { color: scheme.text }]}>{opt.label}</Text>
 									{active && <Ionicons name="checkmark" size={20} color={Palette.brand} />}
 								</Pressable>
 							);

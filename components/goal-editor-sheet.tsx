@@ -28,8 +28,9 @@ import {
 import { ColorPickerModal } from '@/components/color-picker-modal';
 import { IconPickerModal } from '@/components/icon-picker-modal';
 import { goalEditorStyles as styles } from '@/components/goal-editor-sheet.styles';
-import { CategoryColorPalette, Palette, pickNextCategoryColor } from '@/constants/colors';
+import { CategoryColorPalette, isColorSchemeDark, Palette, pickNextCategoryColor } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
+import { useAppTheme } from '@/contexts/theme-context';
 import { useGoals } from '@/contexts/goals-context';
 import { computeGoalDerived, Goal, GoalCreationMode } from '@/utils/goal-calc';
 
@@ -42,6 +43,8 @@ type GoalEditorSheetProps = {
 };
 
 export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps) {
+  const { scheme } = useAppTheme();
+  const isDark = isColorSchemeDark(scheme);
   const { categories, getCategory } = useCategories();
   const { addGoal, updateGoal } = useGoals();
   const isEditing = goal != null;
@@ -153,15 +156,15 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
         style={styles.modalRoot}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <Animated.View style={[styles.sheet, sheetAnimatedStyle]}>
+        <Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheetAnimatedStyle]}>
           <GestureDetector gesture={dragGesture}>
             <View style={styles.dragHandleArea}>
               <View style={styles.grabber} />
-              <View style={styles.header}>
+              <View style={[styles.header, { borderBottomColor: scheme.border }]}>
                 <Pressable onPress={onClose} hitSlop={10}>
-                  <Text style={styles.headerLeft}>Cancel</Text>
+                  <Text style={[styles.headerLeft, { color: scheme.textMuted }]}>Cancel</Text>
                 </Pressable>
-                <Text style={styles.headerTitle}>{isEditing ? 'Edit goal' : 'New goal'}</Text>
+                <Text style={[styles.headerTitle, { color: scheme.text }]}>{isEditing ? 'Edit goal' : 'New goal'}</Text>
                 <View style={styles.headerRight} />
               </View>
             </View>
@@ -175,9 +178,9 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
               <Pressable
                 onPress={() => setColorPickerOpen(true)}
                 hitSlop={6}
-                style={styles.editColorBtn}>
+                style={[styles.editColorBtn, { backgroundColor: scheme.surface }]}>
                 <View style={[styles.catDot, { backgroundColor: color }]} />
-                <View style={styles.editColorBadge}>
+                <View style={[styles.editColorBadge, { backgroundColor: scheme.surface }]}>
                   <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
                 </View>
               </Pressable>
@@ -188,9 +191,9 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
                 <FontAwesome5 name={icon as any} size={14} color={color} solid />
               </Pressable>
               <TextInput
-                style={styles.nameInput}
+                style={[styles.nameInput, { backgroundColor: scheme.surface, color: scheme.text }]}
                 placeholder="Goal name (e.g. New laptop)"
-                placeholderTextColor={Palette.iconMuted}
+                placeholderTextColor={scheme.textMuted}
                 value={name}
                 onChangeText={setName}
                 returnKeyType="done"
@@ -198,11 +201,11 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
             </View>
 
             <View>
-              <Text style={styles.label}>Target amount</Text>
+              <Text style={[styles.label, { color: scheme.textMuted }]}>Target amount</Text>
               <Pressable
-                style={styles.amountWrap}
+                style={[styles.amountWrap, { backgroundColor: scheme.surface }]}
                 onPress={() => targetInputRef.current?.focus()}>
-                <Text style={[styles.amount, !targetDigits && styles.amountMuted]}>
+                <Text style={[styles.amount, { color: scheme.text }, !targetDigits && styles.amountMuted]}>
                   {formatAmountDisplay(targetDigits)}
                 </Text>
                 <TextInput
@@ -210,6 +213,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
                   value={targetDigits}
                   onChangeText={(v) => setTargetDigits(sanitizeAmountDigits(v))}
                   keyboardType="number-pad"
+                  keyboardAppearance={isDark ? 'dark' : 'light'}
                   style={styles.hiddenInput}
                   caretHidden
                   maxLength={9}
@@ -218,7 +222,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
               </Pressable>
             </View>
 
-            <View style={styles.modeToggle}>
+            <View style={[styles.modeToggle, { backgroundColor: scheme.toggleTrack }]}>
               {(
                 [
                   { id: 'fromWeeks', label: 'Set a deadline' },
@@ -230,8 +234,8 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
                   <Pressable
                     key={opt.id}
                     onPress={() => setMode(opt.id)}
-                    style={[styles.modeBtn, active && styles.modeBtnActive]}>
-                    <Text style={[styles.modeText, active && styles.modeTextActive]}>
+                    style={[styles.modeBtn, active && styles.modeBtnActive, active && { backgroundColor: scheme.background }]}>
+                    <Text style={[styles.modeText, { color: scheme.textMuted }, active && [styles.modeTextActive, { color: scheme.text }]]}>
                       {opt.label}
                     </Text>
                   </Pressable>
@@ -241,43 +245,45 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
 
             {mode === 'fromWeeks' ? (
               <>
-                <Text style={styles.label}>Weeks until I want it</Text>
+                <Text style={[styles.label, { color: scheme.textMuted }]}>Weeks until I want it</Text>
                 <View style={styles.inputRow}>
                   <TextInput
-                    style={styles.numberInput}
+                    style={[styles.numberInput, { backgroundColor: scheme.surface, color: scheme.text }]}
                     keyboardType="number-pad"
+                    keyboardAppearance={isDark ? 'dark' : 'light'}
                     inputAccessoryViewID={ACCESSORY_ID}
                     value={weeksDraft}
                     onChangeText={(v) => setWeeksDraft(v.replace(/\D/g, ''))}
                     maxLength={4}
                   />
-                  <Text style={{ color: Palette.textMuted }}>weeks</Text>
+                  <Text style={{ color: scheme.textMuted }}>weeks</Text>
                 </View>
-                <View style={styles.derivedCard}>
-                  <Text style={styles.derivedTitle}>You&apos;ll need to save</Text>
-                  <Text style={styles.derivedValue}>
+                <View style={[styles.derivedCard, { backgroundColor: scheme.surface }]}>
+                  <Text style={[styles.derivedTitle, { color: scheme.textMuted }]}>You&apos;ll need to save</Text>
+                  <Text style={[styles.derivedValue, { color: scheme.text }]}>
                     {formatCentsDisplay(derived.weeklyCents)} / week
                   </Text>
                 </View>
               </>
             ) : (
               <>
-                <Text style={styles.label}>Weekly contribution</Text>
+                <Text style={[styles.label, { color: scheme.textMuted }]}>Weekly contribution</Text>
                 <View style={styles.inputRow}>
-                  <Text style={{ color: Palette.textMuted }}>$</Text>
+                  <Text style={{ color: scheme.textMuted }}>$</Text>
                   <TextInput
-                    style={styles.numberInput}
+                    style={[styles.numberInput, { backgroundColor: scheme.surface, color: scheme.text }]}
                     keyboardType="number-pad"
+                    keyboardAppearance={isDark ? 'dark' : 'light'}
                     inputAccessoryViewID={ACCESSORY_ID}
                     value={weeklyDollarsDraft}
                     onChangeText={(v) => setWeeklyDollarsDraft(v.replace(/\D/g, ''))}
                     maxLength={5}
                   />
-                  <Text style={{ color: Palette.textMuted }}>/ week</Text>
+                  <Text style={{ color: scheme.textMuted }}>/ week</Text>
                 </View>
-                <View style={styles.derivedCard}>
-                  <Text style={styles.derivedTitle}>You&apos;ll hit your target in</Text>
-                  <Text style={styles.derivedValue}>{derived.weeks} weeks</Text>
+                <View style={[styles.derivedCard, { backgroundColor: scheme.surface }]}>
+                  <Text style={[styles.derivedTitle, { color: scheme.textMuted }]}>You&apos;ll hit your target in</Text>
+                  <Text style={[styles.derivedValue, { color: scheme.text }]}>{derived.weeks} weeks</Text>
                 </View>
               </>
             )}
@@ -294,7 +300,7 @@ export function GoalEditorSheet({ visible, goal, onClose }: GoalEditorSheetProps
 
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={ACCESSORY_ID}>
-          <View style={styles.kbAccessory}>
+          <View style={[styles.kbAccessory, { backgroundColor: scheme.surface, borderTopColor: scheme.border }]}>
             <Pressable
               onPress={() => Keyboard.dismiss()}
               hitSlop={10}

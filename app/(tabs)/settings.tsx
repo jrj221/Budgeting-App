@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { styles } from "@/app/(tabs)/settings.styles";
 import { Palette } from "@/constants/colors";
+import { DEV_MODE } from "@/constants/dev";
 import { useCategories } from "@/contexts/categories-context";
 import { useGoals } from "@/contexts/goals-context";
 import { useOnboarding } from "@/contexts/onboarding-context";
@@ -60,8 +61,8 @@ export default function SettingsScreen() {
 					<Text style={[styles.subtitle, { color: current.textMuted }]}>Personalize how the app looks.</Text>
 				</View>
 
-				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Color scheme</Text>
+				<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
+					<Text style={[styles.sectionTitle, { color: current.text }]}>Color scheme</Text>
 					{schemes.map((scheme, i) => {
 						const active = current.id === scheme.id;
 						const isLast = i === schemes.length - 1;
@@ -77,7 +78,7 @@ export default function SettingsScreen() {
 										<View style={[styles.swatch, { backgroundColor: scheme.text }]} />
 										<View style={[styles.swatch, { backgroundColor: scheme.lineChart }]} />
 									</View>
-									<Text style={styles.schemeName}>{scheme.name}</Text>
+									<Text style={[styles.schemeName, { color: current.text }]}>{scheme.name}</Text>
 								</View>
 								{active && <Ionicons name="checkmark-circle" size={22} color={Palette.brand} />}
 							</Pressable>
@@ -85,31 +86,33 @@ export default function SettingsScreen() {
 					})}
 				</View>
 
-				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Test data</Text>
-					<Text style={styles.sectionSubtitle}>
-						Drop in a varied set of past + future transactions so you don&apos;t have to retype them every
-						reload.
-					</Text>
-					<Pressable onPress={onLoadSample} style={styles.actionRow}>
-						<Ionicons name="sparkles-outline" size={20} color={Palette.brand} />
-						<Text style={styles.actionText}>Load sample transactions</Text>
-						<Text style={styles.actionMeta}>+35 entries</Text>
-					</Pressable>
-					<Pressable
-						onPress={onClearAll}
-						style={[styles.actionRow, styles.actionRowLast]}
-						disabled={transactions.length === 0}
-					>
-						<Ionicons name="trash-outline" size={20} color={Palette.spent} />
-						<Text style={[styles.actionText, { color: Palette.spent }]}>Clear all transactions</Text>
-						<Text style={styles.actionMeta}>{transactions.length} stored</Text>
-					</Pressable>
-				</View>
+				{DEV_MODE && (
+					<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
+						<Text style={[styles.sectionTitle, { color: current.text }]}>Test data</Text>
+						<Text style={[styles.sectionSubtitle, { color: current.textMuted }]}>
+							Drop in a varied set of past + future transactions so you don&apos;t have to retype them every
+							reload.
+						</Text>
+						<Pressable onPress={onLoadSample} style={styles.actionRow}>
+							<Ionicons name="sparkles-outline" size={20} color={Palette.brand} />
+							<Text style={[styles.actionText, { color: current.text }]}>Load sample transactions</Text>
+							<Text style={[styles.actionMeta, { color: current.textMuted }]}>+35 entries</Text>
+						</Pressable>
+						<Pressable
+							onPress={onClearAll}
+							style={[styles.actionRow, styles.actionRowLast]}
+							disabled={transactions.length === 0}
+						>
+							<Ionicons name="trash-outline" size={20} color={Palette.spent} />
+							<Text style={[styles.actionText, { color: Palette.spent }]}>Clear all transactions</Text>
+							<Text style={[styles.actionMeta, { color: current.textMuted }]}>{transactions.length} stored</Text>
+						</Pressable>
+					</View>
+				)}
 
-				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Start fresh</Text>
-					<Text style={styles.sectionSubtitle}>
+				<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
+					<Text style={[styles.sectionTitle, { color: current.text }]}>Start fresh</Text>
+					<Text style={[styles.sectionSubtitle, { color: current.textMuted }]}>
 						Reset everything and pick a new starting balance from the welcome screen.
 					</Text>
 					<Pressable onPress={onResetBudget} style={[styles.actionRow, styles.actionRowLast]}>

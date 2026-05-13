@@ -5,6 +5,7 @@ import {
   Alert,
   InputAccessoryView,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -30,8 +31,9 @@ import {
   TransactionMode,
 } from '@/components/add-transaction-card.presenter';
 import { editStyles as styles } from '@/components/edit-transaction-sheet.styles';
-import { ModeColors, Palette } from '@/constants/colors';
+import { isColorSchemeDark, ModeColors, Palette } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
+import { useAppTheme } from '@/contexts/theme-context';
 import { useGoals } from '@/contexts/goals-context';
 import { useTransactions } from '@/contexts/transactions-context';
 
@@ -48,6 +50,8 @@ export function EditTransactionSheet({
   transaction,
   onClose,
 }: EditTransactionSheetProps) {
+  const { scheme } = useAppTheme();
+  const isDark = isColorSchemeDark(scheme);
   const { categories, getCategory } = useCategories();
   const { getGoalByCategory } = useGoals();
   const {
@@ -213,21 +217,24 @@ export function EditTransactionSheet({
   };
 
   if (!transaction) return null;
+  const originalCategory = categories.find((c) => c.id === transaction.categoryId) ?? null;
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalRoot}>
+      <KeyboardAvoidingView
+        style={styles.modalRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <Animated.View style={[styles.sheet, sheetAnimatedStyle]}>
+        <Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheetAnimatedStyle]}>
           <GestureDetector gesture={dragGesture}>
             <View style={styles.dragHandleArea}>
               <View style={styles.grabber} />
-              <View style={styles.header}>
+              <View style={[styles.header, { borderBottomColor: scheme.border }]}>
                 <Pressable onPress={onClose} hitSlop={10}>
-                  <Text style={styles.headerCancel}>Cancel</Text>
+                  <Text style={[styles.headerCancel, { color: scheme.textMuted }]}>Cancel</Text>
                 </Pressable>
-                <Text style={styles.headerTitle}>Edit transaction</Text>
+                <Text style={[styles.headerTitle, { color: scheme.text }]}>Edit transaction</Text>
                 <View style={styles.headerSpacer} />
               </View>
             </View>
@@ -251,17 +258,17 @@ export function EditTransactionSheet({
                 }}>
                 <Ionicons name="flag" size={18} color={goalColor} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: Palette.text }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: scheme.text }}>
                     {mode === 'spent' ? 'Goal contribution' : 'Goal withdrawal'}
                   </Text>
-                  <Text style={{ fontSize: 12, color: Palette.textMuted }}>
+                  <Text style={{ fontSize: 12, color: scheme.textMuted }}>
                     {linkedGoal.name} · Title and category are managed by the goal.
                   </Text>
                 </View>
               </View>
             )}
 
-            <View style={styles.modeRow}>
+            <View style={[styles.modeRow, { backgroundColor: scheme.toggleTrack }]}>
               {(['spent', 'earned'] as TransactionMode[]).map((m) => {
                 const active = mode === m;
                 return (
@@ -273,7 +280,7 @@ export function EditTransactionSheet({
                       active && styles.modeBtnActive,
                       active && { backgroundColor: ModeColors[m] },
                     ]}>
-                    <Text style={[styles.modeText, active && styles.modeTextActive]}>
+                    <Text style={[styles.modeText, { color: scheme.textMuted }, active && styles.modeTextActive]}>
                       {m === 'spent' ? 'Spent' : 'Earned'}
                     </Text>
                   </Pressable>
@@ -284,7 +291,7 @@ export function EditTransactionSheet({
             <Pressable
               style={styles.amountWrap}
               onPress={() => amountInputRef.current?.focus()}>
-              <Text style={[styles.amount, !amountDigits && styles.amountMuted]}>
+              <Text style={[styles.amount, { color: scheme.text }, !amountDigits && styles.amountMuted]}>
                 {formatAmountDisplay(amountDigits)}
               </Text>
               <TextInput
@@ -300,16 +307,16 @@ export function EditTransactionSheet({
             </Pressable>
 
             {isGoalTx ? (
-              <View style={[styles.titleInput, { justifyContent: 'center' }]}>
-                <Text style={{ fontSize: 17, fontWeight: '500', color: Palette.text }}>
+              <View style={[styles.titleInput, { backgroundColor: scheme.surface, justifyContent: 'center' }]}>
+                <Text style={{ fontSize: 17, fontWeight: '500', color: scheme.text }}>
                   {effectiveTitle}
                 </Text>
               </View>
             ) : (
               <TextInput
-                style={styles.titleInput}
+                style={[styles.titleInput, { backgroundColor: scheme.surface, color: scheme.text }]}
                 placeholder="What's it for?"
-                placeholderTextColor={Palette.iconMuted}
+                placeholderTextColor={scheme.textMuted}
                 value={title}
                 onChangeText={setTitle}
                 returnKeyType="done"
@@ -317,32 +324,32 @@ export function EditTransactionSheet({
             )}
 
             <Pressable
-              style={styles.row}
+              style={[styles.row, { backgroundColor: scheme.surface }]}
               onPress={() => {
                 Keyboard.dismiss();
                 setIsDatePickerOpen((v) => !v);
               }}>
               <View style={styles.rowLeft}>
-                <Ionicons name="calendar-outline" size={20} color={Palette.text} />
-                <Text style={styles.rowLabel}>Date</Text>
+                <Ionicons name="calendar-outline" size={20} color={scheme.text} />
+                <Text style={[styles.rowLabel, { color: scheme.text }]}>Date</Text>
               </View>
               <View style={styles.rowRight}>
-                <Text style={styles.rowValue}>{formatDateLabel(date)}</Text>
+                <Text style={[styles.rowValue, { color: scheme.text }]}>{formatDateLabel(date)}</Text>
                 <Ionicons
                   name={isDatePickerOpen ? 'chevron-up' : 'chevron-down'}
                   size={18}
-                  color={Palette.iconMuted}
+                  color={scheme.textMuted}
                 />
               </View>
             </Pressable>
             {isDatePickerOpen && (
-              <View style={styles.wheelWrap}>
+              <View style={[styles.wheelWrap, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
                 <DateTimePicker
                   value={date}
                   mode="date"
                   display="spinner"
-                  themeVariant="light"
-                  textColor={Palette.text}
+                  themeVariant={isDark ? 'dark' : 'light'}
+                  textColor={scheme.text}
                   onChange={(_, d) => {
                     if (d) setDate(d);
                   }}
@@ -352,18 +359,13 @@ export function EditTransactionSheet({
 
             {!isGoalTx && (
             <View>
-              <Text style={[styles.rowLabel, { marginBottom: 8 }]}>Category</Text>
+              <Text style={[styles.rowLabel, { color: scheme.text, marginBottom: 8 }]}>Category</Text>
               <View style={styles.catGrid}>
                 <Pressable
                   onPress={() => setCategoryId(null)}
-                  style={[styles.catChip, categoryId === null && styles.catChipActive]}>
-                  <View
-                    style={[
-                      styles.catDot,
-                      { backgroundColor: Palette.uncategorized },
-                    ]}
-                  />
-                  <Text style={styles.catName}>None</Text>
+                  style={[styles.catChip, { backgroundColor: scheme.surface, borderColor: scheme.border }, categoryId === null && [styles.catChipActive, { backgroundColor: scheme.background, borderColor: Palette.brand }]]}>
+                  <View style={[styles.catDot, { backgroundColor: Palette.uncategorized }]} />
+                  <Text style={[styles.catName, { color: scheme.text }]}>None</Text>
                 </Pressable>
                 {categories.map((cat) => {
                   const active = categoryId === cat.id;
@@ -371,21 +373,16 @@ export function EditTransactionSheet({
                     <Pressable
                       key={cat.id}
                       onPress={() => setCategoryId(cat.id)}
-                      style={[styles.catChip, active && styles.catChipActive]}>
+                      style={[styles.catChip, { backgroundColor: scheme.surface, borderColor: scheme.border }, active && [styles.catChipActive, { backgroundColor: scheme.background, borderColor: Palette.brand }]]}>
                       <View style={[styles.catDot, { backgroundColor: cat.color }]} />
-                      <Text style={styles.catName}>{cat.name}</Text>
+                      <Text style={[styles.catName, { color: scheme.text }]}>{cat.name}</Text>
                     </Pressable>
                   );
                 })}
               </View>
-              {selectedCategory && (
-                <Text
-                  style={{
-                    marginTop: 6,
-                    fontSize: 12,
-                    color: Palette.textMuted,
-                  }}>
-                  Currently: {selectedCategory.name}
+              {originalCategory && categoryId !== transaction.categoryId && (
+                <Text style={{ marginTop: 6, fontSize: 12, color: scheme.textMuted }}>
+                  Previously: {originalCategory.name}
                 </Text>
               )}
             </View>
@@ -421,11 +418,11 @@ export function EditTransactionSheet({
             </View>
           </ScrollView>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
 
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={EDIT_NUMPAD_ACCESSORY_ID}>
-          <View style={styles.kbAccessory}>
+          <View style={[styles.kbAccessory, { backgroundColor: scheme.surface, borderTopColor: scheme.border }]}>
             <Pressable
               onPress={() => Keyboard.dismiss()}
               hitSlop={10}

@@ -52,7 +52,7 @@ export default function GoalsScreen() {
         </View>
 
         {goals.length === 0 ? (
-          <View style={styles.empty}>
+          <View style={[styles.empty, { backgroundColor: scheme.cardBackground }]}>
             <Ionicons name="flag-outline" size={28} color={Palette.iconMuted} />
             <Text style={styles.emptyTitle}>No goals yet</Text>
             <Text style={styles.emptyBody}>

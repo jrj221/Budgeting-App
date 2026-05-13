@@ -26,6 +26,7 @@ import { ColorPickerModal } from '@/components/color-picker-modal';
 import { IconPickerModal } from '@/components/icon-picker-modal';
 import { Palette, pickNextCategoryColor } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
+import { useAppTheme } from '@/contexts/theme-context';
 
 const ACCESSORY_ID = 'budget-editor-done';
 
@@ -43,6 +44,7 @@ export function BudgetEditorSheet({
   tourMode = false,
   onSkip,
 }: BudgetEditorSheetProps) {
+  const { scheme } = useAppTheme();
   const {
     categories,
     addCategory,
@@ -93,7 +95,7 @@ export function BudgetEditorSheet({
         style={styles.modalRoot}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <Animated.View style={[styles.sheet, sheetAnimatedStyle]}>
+        <Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheetAnimatedStyle]}>
           <GestureDetector gesture={dragGesture}>
             <View style={styles.dragHandleArea}>
               <View style={styles.grabber} />
@@ -113,7 +115,7 @@ export function BudgetEditorSheet({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 8 }}>
-            <Text style={styles.hint}>
+            <Text style={[styles.hint, { color: scheme.textMuted }]}>
               Pick how much you want to spend each week. Monthly is auto-calculated as
               weekly × 4 — toggle to manual to set it yourself.
             </Text>
@@ -156,7 +158,7 @@ export function BudgetEditorSheet({
 
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={ACCESSORY_ID}>
-          <View style={styles.kbAccessory}>
+          <View style={[styles.kbAccessory, { backgroundColor: scheme.surface, borderTopColor: scheme.border }]}>
             <Pressable
               onPress={() => Keyboard.dismiss()}
               hitSlop={10}
@@ -188,6 +190,7 @@ function CategoryRow({
     monthlyOverrideCents: number | null,
   ) => void;
 }) {
+  const { scheme } = useAppTheme();
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(category.name);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -249,22 +252,23 @@ function CategoryRow({
   };
 
   return (
-    <View style={styles.catRow}>
+    <View style={[styles.catRow, { backgroundColor: scheme.surface }]}>
       <View style={styles.catRowTop}>
         <Pressable
           onPress={() => setColorPickerOpen(true)}
           hitSlop={6}
-          style={styles.editColorBtn}>
+          style={[styles.editColorBtn, { backgroundColor: scheme.background }]}>
           <View style={[styles.catDot, { backgroundColor: category.color }]} />
-          <View style={styles.editColorBadge}>
+          <View style={[styles.editColorBadge, { backgroundColor: scheme.background }]}>
             <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
           </View>
         </Pressable>
         {editingName ? (
           <TextInput
-            style={styles.catNameInput}
+            style={[styles.catNameInput, { color: scheme.text, borderBottomColor: Palette.brand }]}
             value={draftName}
             onChangeText={setDraftName}
+            placeholderTextColor={scheme.textMuted}
             autoFocus
             onBlur={commitName}
             onSubmitEditing={commitName}
@@ -272,7 +276,7 @@ function CategoryRow({
           />
         ) : (
           <Pressable style={{ flex: 1 }} onPress={() => setEditingName(true)}>
-            <Text style={styles.catName}>{category.name}</Text>
+            <Text style={[styles.catName, { color: scheme.text }]}>{category.name}</Text>
           </Pressable>
         )}
         <Pressable
@@ -292,13 +296,13 @@ function CategoryRow({
       />
 
       <View style={styles.budgetRow}>
-        <Text style={styles.budgetLabel}>Weekly</Text>
+        <Text style={[styles.budgetLabel, { color: scheme.textMuted }]}>Weekly</Text>
         <TextInput
-          style={styles.budgetInput}
+          style={[styles.budgetInput, { backgroundColor: scheme.surface, color: scheme.text, borderColor: scheme.border }]}
           keyboardType="number-pad"
           inputAccessoryViewID={ACCESSORY_ID}
           placeholder="$"
-          placeholderTextColor={Palette.iconMuted}
+          placeholderTextColor={scheme.textMuted}
           value={weeklyDraft ? `$${weeklyDraft}` : ''}
           onChangeText={(v) => {
             const digits = v.replace(/\D/g, '');
@@ -310,16 +314,17 @@ function CategoryRow({
       </View>
 
       <View style={styles.budgetRow}>
-        <Text style={styles.budgetLabel}>Monthly</Text>
+        <Text style={[styles.budgetLabel, { color: scheme.textMuted }]}>Monthly</Text>
         <TextInput
           style={[
             styles.budgetInput,
-            monthlyMode === 'auto' && styles.budgetInputDisabled,
+            { backgroundColor: scheme.surface, color: scheme.text, borderColor: scheme.border },
+            monthlyMode === 'auto' && { backgroundColor: scheme.toggleTrack, color: scheme.textMuted },
           ]}
           keyboardType="number-pad"
           inputAccessoryViewID={ACCESSORY_ID}
           placeholder="$"
-          placeholderTextColor={Palette.iconMuted}
+          placeholderTextColor={scheme.textMuted}
           editable={monthlyMode === 'manual'}
           value={
             monthlyMode === 'auto'
@@ -337,15 +342,15 @@ function CategoryRow({
           onBlur={() => commitManualMonthly(manualMonthlyDraft)}
           onEndEditing={() => commitManualMonthly(manualMonthlyDraft)}
         />
-        <View style={styles.modeToggle}>
+        <View style={[styles.modeToggle, { backgroundColor: scheme.toggleTrack }]}>
           {(['auto', 'manual'] as const).map((m) => {
             const active = monthlyMode === m;
             return (
               <Pressable
                 key={m}
                 onPress={() => (m === 'auto' ? switchToAuto() : switchToManual())}
-                style={[styles.modeBtn, active && styles.modeBtnActive]}>
-                <Text style={[styles.modeText, active && styles.modeTextActive]}>{m}</Text>
+                style={[styles.modeBtn, active && styles.modeBtnActive, active && { backgroundColor: scheme.cardBackground }]}>
+                <Text style={[styles.modeText, { color: scheme.textMuted }, active && [styles.modeTextActive, { color: scheme.text }]]}>{m}</Text>
               </Pressable>
             );
           })}
@@ -362,6 +367,7 @@ function AddCategoryRow({
   existingColors: string[];
   onAdd: (name: string, color: string, icon: string) => unknown;
 }) {
+  const { scheme } = useAppTheme();
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
   const [icon, setIcon] = useState('tag');
@@ -387,23 +393,23 @@ function AddCategoryRow({
   };
 
   return (
-    <View style={styles.addColumn}>
+    <View style={[styles.addColumn, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
       <View style={styles.addColumnHeader}>
-        <Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
+        <Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: scheme.background }]}>
           <View style={[styles.catDot, { backgroundColor: color }]} />
-          <View style={styles.editColorBadge}>
+          <View style={[styles.editColorBadge, { backgroundColor: scheme.background }]}>
             <Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
           </View>
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: color + '18' }]}>
           <Ionicons name="apps-sharp" size={14} color={color} />
         </Pressable>
-        <Text style={styles.addColumnTitle}>Add a category</Text>
+        <Text style={[styles.addColumnTitle, { color: scheme.text }]}>Add a budget</Text>
       </View>
       <TextInput
-        style={styles.addColumnInput}
-        placeholder="Category name"
-        placeholderTextColor={Palette.iconMuted}
+        style={[styles.addColumnInput, { backgroundColor: scheme.background, color: scheme.text, borderColor: scheme.border }]}
+        placeholder="Budget name"
+        placeholderTextColor={scheme.textMuted}
         value={name}
         onChangeText={setName}
         onSubmitEditing={submit}

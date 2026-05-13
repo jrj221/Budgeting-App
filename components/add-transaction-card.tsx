@@ -36,7 +36,8 @@ import {
 import { styles } from "@/components/add-transaction-card.styles";
 import { ColorPickerModal } from "@/components/color-picker-modal";
 import { IconPickerModal } from "@/components/icon-picker-modal";
-import { ModeColors, Palette, pickNextCategoryColor } from "@/constants/colors";
+import { isColorSchemeDark, ModeColors, Palette, pickNextCategoryColor } from "@/constants/colors";
+import { useAppTheme } from "@/contexts/theme-context";
 import { useAddTransactionCard } from "@/hooks/use-add-transaction-card";
 
 export type AddTransactionCardProps = {
@@ -47,14 +48,16 @@ const NUMPAD_ACCESSORY_ID = "number-pad-done";
 
 export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 	const presenter = useAddTransactionCard({ onSubmit });
+	const { scheme } = useAppTheme();
+	const isDark = isColorSchemeDark(scheme);
 	const amountInputRef = useRef<TextInput>(null);
 
 	return (
-		<View style={styles.card}>
+		<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
 			<ModeToggle mode={presenter.draft.mode} onChange={presenter.setMode} />
 
 			<Pressable style={styles.amountWrap} onPress={() => amountInputRef.current?.focus()}>
-				<Text style={[styles.amount, !presenter.draft.amountDigits && styles.amountMuted]}>
+				<Text style={[styles.amount, { color: scheme.text }, !presenter.draft.amountDigits && styles.amountMuted]}>
 					{formatAmountDisplay(presenter.draft.amountDigits)}
 				</Text>
 				<TextInput
@@ -62,6 +65,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 					value={presenter.draft.amountDigits}
 					onChangeText={presenter.setAmountFromInput}
 					keyboardType="number-pad"
+					keyboardAppearance={isDark ? 'dark' : 'light'}
 					style={styles.hiddenInput}
 					caretHidden
 					maxLength={9}
@@ -70,36 +74,36 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 			</Pressable>
 
 			<TextInput
-				style={styles.titleInput}
+				style={[styles.titleInput, { backgroundColor: scheme.surface, color: scheme.text }]}
 				placeholder="What's it for?"
-				placeholderTextColor={Palette.iconMuted}
+				placeholderTextColor={scheme.textMuted}
 				value={presenter.draft.title}
 				onChangeText={presenter.setTitle}
 				returnKeyType="done"
 			/>
 
 			<Pressable
-				style={styles.row}
+				style={[styles.row, { backgroundColor: scheme.surface }]}
 				onPress={() => {
 					Keyboard.dismiss();
 					presenter.toggleDatePicker();
 				}}
 			>
 				<View style={styles.rowLeft}>
-					<Ionicons name="calendar-outline" size={20} color={Palette.text} />
-					<Text style={styles.rowLabel}>Date</Text>
+					<Ionicons name="calendar-outline" size={20} color={scheme.text} />
+					<Text style={[styles.rowLabel, { color: scheme.text }]}>Date</Text>
 				</View>
 				<View style={styles.rowRight}>
-					<Text style={styles.rowValue}>{formatDateLabel(presenter.draft.date)}</Text>
+					<Text style={[styles.rowValue, { color: scheme.text }]}>{formatDateLabel(presenter.draft.date)}</Text>
 					<Ionicons
 						name={presenter.isDatePickerOpen ? "chevron-up" : "chevron-down"}
 						size={18}
-						color={Palette.iconMuted}
+						color={scheme.textMuted}
 					/>
 				</View>
 			</Pressable>
 			{presenter.isDatePickerOpen && (
-				<View style={styles.wheelWrap}>
+				<View style={[styles.wheelWrap, { backgroundColor: scheme.cardBackground }]}>
 					<DateTimePicker
 						value={presenter.draft.date}
 						mode="date"
@@ -115,41 +119,41 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 
 			{presenter.draft.mode === "spent" && (
 				<Pressable
-					style={styles.row}
+					style={[styles.row, { backgroundColor: scheme.surface }]}
 					onPress={() => {
 						Keyboard.dismiss();
 						presenter.openCategorySheet();
 					}}
 				>
 					<View style={styles.rowLeft}>
-						<Ionicons name="pricetag-outline" size={20} color={Palette.text} />
-						<Text style={styles.rowLabel}>Category</Text>
+						<Ionicons name="pricetag-outline" size={20} color={scheme.text} />
+						<Text style={[styles.rowLabel, { color: scheme.text }]}>Category</Text>
 					</View>
 					<View style={styles.rowRight}>
-						<Text style={[styles.rowValue, !presenter.selectedCategory && styles.rowValueMuted]}>
+						<Text style={[styles.rowValue, { color: scheme.text }, !presenter.selectedCategory && styles.rowValueMuted]}>
 							{presenter.selectedCategory?.name ?? "None"}
 						</Text>
-						<Ionicons name="chevron-forward" size={18} color={Palette.iconMuted} />
+						<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
 					</View>
 				</Pressable>
 			)}
 
 			<Pressable
-				style={styles.row}
+				style={[styles.row, { backgroundColor: scheme.surface }]}
 				onPress={() => {
 					Keyboard.dismiss();
 					presenter.openRepeatSheet();
 				}}
 			>
 				<View style={styles.rowLeft}>
-					<Ionicons name="repeat" size={20} color={Palette.text} />
-					<Text style={styles.rowLabel}>Repeat</Text>
+					<Ionicons name="repeat" size={20} color={scheme.text} />
+					<Text style={[styles.rowLabel, { color: scheme.text }]}>Repeat</Text>
 				</View>
 				<View style={styles.rowRight}>
-					<Text style={[styles.rowValue, !presenter.repeat.enabled && styles.rowValueMuted]}>
+					<Text style={[styles.rowValue, { color: scheme.text }, !presenter.repeat.enabled && styles.rowValueMuted]}>
 						{presenter.repeat.enabled ? formatRepeatSummary(presenter.repeat) : "Never"}
 					</Text>
-					<Ionicons name="chevron-forward" size={18} color={Palette.iconMuted} />
+					<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
 				</View>
 			</Pressable>
 
@@ -195,7 +199,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 
 			{Platform.OS === "ios" && (
 				<InputAccessoryView nativeID={NUMPAD_ACCESSORY_ID}>
-					<View style={styles.kbAccessory}>
+					<View style={[styles.kbAccessory, { backgroundColor: scheme.surface, borderTopColor: scheme.border }]}>
 						<Pressable onPress={() => Keyboard.dismiss()} hitSlop={10} style={styles.kbAccessoryBtn}>
 							<Ionicons name="checkmark" size={22} color={Palette.brand} />
 							<Text style={styles.kbAccessoryText}>Done</Text>
@@ -208,9 +212,10 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 }
 
 function ModeToggle({ mode, onChange }: { mode: TransactionMode; onChange: (m: TransactionMode) => void }) {
+	const { scheme } = useAppTheme();
 	const options: TransactionMode[] = ["spent", "earned"];
 	return (
-		<View style={styles.toggle}>
+		<View style={[styles.toggle, { backgroundColor: scheme.toggleTrack }]}>
 			{options.map((m) => {
 				const active = mode === m;
 				return (
@@ -249,6 +254,7 @@ type CategorySheetProps = {
 };
 
 function CategorySheet(props: CategorySheetProps) {
+	const { scheme } = useAppTheme();
 	const { height: windowHeight } = useWindowDimensions();
 	const listMaxHeight = windowHeight * 0.5;
 	const sheet = useSheetGesture(props.visible, props.onClose);
@@ -260,16 +266,16 @@ function CategorySheet(props: CategorySheetProps) {
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 			>
 				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
-					<Animated.View style={[styles.sheet, sheet.animatedStyle]}>
+					<Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheet.animatedStyle]}>
 						<Pressable onPress={() => {}}>
 							<GestureDetector gesture={sheet.gesture}>
 								<View style={styles.sheetGrabber}>
 									<View style={styles.sheetHandle} />
-									<View style={styles.sheetHeader}>
+									<View style={[styles.sheetHeader, { borderBottomColor: scheme.border }]}>
 									<Pressable onPress={props.onClose} hitSlop={10}>
-										<Text style={styles.sheetCancel}>Cancel</Text>
+										<Text style={[styles.sheetCancel, { color: scheme.text }]}>Cancel</Text>
 									</Pressable>
-									<Text style={styles.sheetTitle}>Category</Text>
+									<Text style={[styles.sheetTitle, { color: scheme.text }]}>Category</Text>
 									<Pressable onPress={props.onToggleEdit} hitSlop={10}>
 										<Text style={styles.sheetEdit}>{props.isEditing ? "Done" : "Edit"}</Text>
 									</Pressable>
@@ -298,26 +304,26 @@ function CategorySheet(props: CategorySheetProps) {
 							) : (
 								<View style={styles.catGrid}>
 									<Pressable
-										style={[styles.catGridCell, props.selectedId === null && styles.catGridCellSelected]}
+										style={[styles.catGridCell, { backgroundColor: scheme.surface, borderColor: scheme.border }, props.selectedId === null && styles.catGridCellSelected, props.selectedId === null && { backgroundColor: scheme.cardBackground }]}
 										onPress={() => props.onSelect(null)}
 									>
-										<View style={[styles.catGridIcon, { backgroundColor: Palette.surface }]}>
-											<Ionicons name="ban" size={20} color={Palette.iconMuted} />
+										<View style={[styles.catGridIcon, { backgroundColor: scheme.toggleTrack }]}>
+											<Ionicons name="ban" size={20} color={scheme.textMuted} />
 										</View>
-										<Text style={styles.catGridLabel} numberOfLines={1}>None</Text>
+										<Text style={[styles.catGridLabel, { color: scheme.text }]} numberOfLines={1}>None</Text>
 									</Pressable>
 									{props.categories.filter((c) => !c.isGoal).map((cat) => {
 										const sel = props.selectedId === cat.id;
 										return (
 											<Pressable
 												key={cat.id}
-												style={[styles.catGridCell, sel && styles.catGridCellSelected]}
+												style={[styles.catGridCell, { backgroundColor: scheme.surface, borderColor: scheme.border }, sel && styles.catGridCellSelected, sel && { backgroundColor: scheme.cardBackground }]}
 												onPress={() => props.onSelect(cat.id)}
 											>
 												<View style={[styles.catGridIcon, { backgroundColor: cat.color + "22" }]}>
 													<FontAwesome5 name={cat.icon as any} size={20} color={cat.color} solid />
 												</View>
-												<Text style={styles.catGridLabel} numberOfLines={1}>{cat.name}</Text>
+												<Text style={[styles.catGridLabel, { color: scheme.text }]} numberOfLines={1}>{cat.name}</Text>
 												{sel && (
 													<View style={styles.catGridCheck}>
 														<Ionicons name="checkmark-circle" size={16} color={Palette.brand} />
@@ -358,6 +364,7 @@ function EditableCategoryRow({
 	onSetColor: (color: string) => void;
 	onSetIcon: (icon: string) => void;
 }) {
+	const { scheme } = useAppTheme();
 	const [editing, setEditing] = useState(false);
 	const [draftName, setDraftName] = useState(category.name);
 	const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -381,9 +388,9 @@ function EditableCategoryRow({
 			</Pressable>
 			<View style={styles.sheetRowSelect}>
 				<View style={styles.categoryRowLeft}>
-					<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
+					<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}>
 						<View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-						<View style={styles.editColorBadge}>
+						<View style={[styles.editColorBadge, { backgroundColor: scheme.cardBackground }]}>
 							<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
 						</View>
 					</Pressable>
@@ -427,6 +434,7 @@ function AddCategoryRow({
 	onChangeName: (s: string) => void;
 	onSubmit: (color: string, icon: string) => void;
 }) {
+	const { scheme } = useAppTheme();
 	const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
 	const [icon, setIcon] = useState('tag');
 	const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -447,9 +455,9 @@ function AddCategoryRow({
 
 	return (
 		<View style={styles.addRow}>
-			<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={styles.editColorBtn}>
+			<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}>
 				<View style={[styles.categoryDot, { backgroundColor: color }]} />
-				<View style={styles.editColorBadge}>
+				<View style={[styles.editColorBadge, { backgroundColor: scheme.cardBackground }]}>
 					<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
 				</View>
 			</Pressable>
@@ -457,7 +465,7 @@ function AddCategoryRow({
 				<FontAwesome5 name={icon as any} size={14} color={color} solid />
 			</Pressable>
 			<TextInput
-				style={styles.addInput}
+				style={[styles.addInput, { backgroundColor: scheme.surface, color: scheme.text }]}
 				placeholder="New category name"
 				placeholderTextColor={Palette.iconMuted}
 				value={name}
@@ -487,6 +495,7 @@ type RepeatSheetProps = {
 };
 
 function RepeatSheet(props: RepeatSheetProps) {
+	const { scheme } = useAppTheme();
 	const sheet = useSheetGesture(props.visible, props.onClose);
 	const periodOptions: RepeatPeriod[] = ["weeks", "months"];
 	const endModeOptions: RepeatEndMode[] = ["date", "count"];
@@ -500,26 +509,26 @@ function RepeatSheet(props: RepeatSheetProps) {
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 			>
 				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
-					<Animated.View style={[styles.sheet, sheet.animatedStyle]}>
+					<Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheet.animatedStyle]}>
 						<Pressable onPress={() => {}}>
 							<GestureDetector gesture={sheet.gesture}>
 								<View style={styles.sheetGrabber}>
 									<View style={styles.sheetHandle} />
-									<View style={styles.sheetHeader}>
+									<View style={[styles.sheetHeader, { borderBottomColor: scheme.border }]}>
 										<Pressable onPress={props.onClose} hitSlop={10}>
-											<Text style={styles.sheetCancel}>Cancel</Text>
+											<Text style={[styles.sheetCancel, { color: scheme.text }]}>Cancel</Text>
 										</Pressable>
-										<Text style={styles.sheetTitle}>Repeat</Text>
+										<Text style={[styles.sheetTitle, { color: scheme.text }]}>Repeat</Text>
 										<View style={styles.sheetHeaderSpacer} />
 									</View>
 								</View>
 							</GestureDetector>
 
 							<View style={styles.repeatBody}>
-								<View style={styles.repeatToggleRow}>
+								<View style={[styles.repeatToggleRow, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
 									<View style={styles.rowLeft}>
-										<Ionicons name="repeat" size={20} color={Palette.text} />
-										<Text style={styles.rowLabel}>Repeat this transaction</Text>
+										<Ionicons name="repeat" size={20} color={scheme.text} />
+										<Text style={[styles.rowLabel, { color: scheme.text }]}>Repeat this transaction</Text>
 									</View>
 									<Switch
 										value={props.repeat.enabled}
@@ -532,26 +541,27 @@ function RepeatSheet(props: RepeatSheetProps) {
 							{props.repeat.enabled && (
 								<>
 									<View style={styles.repeatEveryRow}>
-										<Text style={styles.repeatEveryLabel}>Every</Text>
+										<Text style={[styles.repeatEveryLabel, { color: scheme.text }]}>Every</Text>
 										<NumberField
-											style={styles.repeatNumberInput}
+											style={[styles.repeatNumberInput, { backgroundColor: scheme.surface, color: scheme.text }]}
 											value={props.repeat.every}
 											onCommit={props.onSetEvery}
 											maxLength={3}
 										/>
-										<View style={styles.periodToggle}>
+										<View style={[styles.periodToggle, { backgroundColor: scheme.toggleTrack }]}>
 											{periodOptions.map((p) => {
 												const active = props.repeat.period === p;
 												return (
 													<Pressable
 														key={p}
 														onPress={() => props.onSetPeriod(p)}
-														style={[styles.periodBtn, active && styles.periodBtnActive]}
+														style={[styles.periodBtn, active && styles.periodBtnActive, active && { backgroundColor: scheme.cardBackground }]}
 													>
 														<Text
 															style={[
 																styles.periodText,
-																active && styles.periodTextActive,
+																{ color: scheme.textMuted },
+																active && [styles.periodTextActive, { color: scheme.text }],
 															]}
 														>
 															{periodLabel(p)}
@@ -562,17 +572,17 @@ function RepeatSheet(props: RepeatSheetProps) {
 										</View>
 									</View>
 
-									<View style={styles.endModeToggle}>
+									<View style={[styles.endModeToggle, { backgroundColor: scheme.toggleTrack }]}>
 										{endModeOptions.map((m) => {
 											const active = props.repeat.endMode === m;
 											return (
 												<Pressable
 													key={m}
 													onPress={() => props.onSetEndMode(m)}
-													style={[styles.endModeBtn, active && styles.endModeBtnActive]}
+													style={[styles.endModeBtn, active && styles.endModeBtnActive, active && { backgroundColor: scheme.cardBackground }]}
 												>
 													<Text
-														style={[styles.endModeText, active && styles.endModeTextActive]}
+														style={[styles.endModeText, { color: scheme.textMuted }, active && [styles.endModeTextActive, { color: scheme.text }]]}
 													>
 														{m === "date" ? "Until date" : "After N times"}
 													</Text>
@@ -582,23 +592,23 @@ function RepeatSheet(props: RepeatSheetProps) {
 									</View>
 
 									{props.repeat.endMode === "date" ? (
-										<View style={styles.wheelWrap}>
+										<View style={[styles.wheelWrap, { backgroundColor: scheme.cardBackground }]}>
 											<DateTimePicker
 												value={props.repeat.endDate}
 												mode="date"
 												display="spinner"
 												themeVariant="light"
-												textColor={Palette.text}
+												textColor={scheme.text}
 												onChange={(_, d) => {
 													if (d) props.onSetEndDate(d);
 												}}
 											/>
 										</View>
 									) : (
-										<View style={styles.row}>
-											<Text style={styles.rowLabel}>Number of occurrences</Text>
+										<View style={[styles.row, { backgroundColor: scheme.surface }]}>
+											<Text style={[styles.rowLabel, { color: scheme.text }]}>Number of occurrences</Text>
 											<NumberField
-												style={styles.repeatNumberInput}
+												style={[styles.repeatNumberInput, { backgroundColor: scheme.surface, color: scheme.text }]}
 												value={props.repeat.count}
 												onCommit={props.onSetCount}
 												maxLength={3}
@@ -606,7 +616,7 @@ function RepeatSheet(props: RepeatSheetProps) {
 										</View>
 									)}
 
-									<Text style={styles.repeatSummary}>{formatRepeatSummary(props.repeat)}</Text>
+									<Text style={[styles.repeatSummary, { color: scheme.textMuted }]}>{formatRepeatSummary(props.repeat)}</Text>
 								</>
 							)}
 						</View>

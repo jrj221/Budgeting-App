@@ -13,6 +13,7 @@ import Svg, {
 } from 'react-native-svg';
 
 import { pickerStyles as styles } from '@/components/color-picker-modal.styles';
+import { useAppTheme } from '@/contexts/theme-context';
 import { hexToHsv, hsvToHex } from '@/utils/color-conversion';
 
 type ColorPickerModalProps = {
@@ -36,6 +37,7 @@ export function ColorPickerModal({
   onClose,
   onSelect,
 }: ColorPickerModalProps) {
+  const { scheme } = useAppTheme();
   const [hsv, setHsv] = useState(() => hexToHsv(initialColor));
 
   useEffect(() => {
@@ -56,8 +58,8 @@ export function ColorPickerModal({
       onRequestClose={onClose}
       statusBarTranslucent>
       <View style={styles.modalRoot}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{title}</Text>
+        <View style={[styles.card, { backgroundColor: scheme.surface }]}>
+          <Text style={[styles.title, { color: scheme.text }]}>{title}</Text>
 
           <ColorWheel hue={hsv.h} sat={hsv.s} onChange={setHueSat} />
 
@@ -69,12 +71,12 @@ export function ColorPickerModal({
 
           <View style={styles.previewRow}>
             <View style={[styles.previewSwatch, { backgroundColor: currentHex }]} />
-            <Text style={styles.previewHex}>{currentHex.toUpperCase()}</Text>
+            <Text style={[styles.previewHex, { color: scheme.text }]}>{currentHex.toUpperCase()}</Text>
           </View>
 
           <View style={styles.actions}>
-            <Pressable style={[styles.btn, styles.secondary]} onPress={onClose}>
-              <Text style={styles.secondaryText}>Cancel</Text>
+            <Pressable style={[styles.btn, styles.secondary, { backgroundColor: scheme.surface, borderColor: scheme.border }]} onPress={onClose}>
+              <Text style={[styles.secondaryText, { color: scheme.text }]}>Cancel</Text>
             </Pressable>
             <Pressable
               style={[styles.btn, styles.primary]}

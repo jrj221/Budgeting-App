@@ -43,7 +43,7 @@ export default function HistoryScreen() {
           </Text>
         </View>
 
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, { backgroundColor: scheme.toggleTrack }]}>
           {(Object.keys(TAB_LABELS) as TabKey[]).map((key) => {
             const active = tab === key;
             const count = key === 'upcoming' ? upcoming.length : completed.length;
@@ -51,8 +51,8 @@ export default function HistoryScreen() {
               <Pressable
                 key={key}
                 onPress={() => setTab(key)}
-                style={[styles.tabBtn, active && styles.tabBtnActive]}>
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                style={[styles.tabBtn, active && [styles.tabBtnActive, { backgroundColor: scheme.cardBackground }]]}>
+                <Text style={[styles.tabText, { color: scheme.textMuted }, active && [styles.tabTextActive, { color: scheme.text }]]}>
                   {TAB_LABELS[key]} {count > 0 ? `(${count})` : ''}
                 </Text>
               </Pressable>
@@ -81,17 +81,18 @@ export default function HistoryScreen() {
 }
 
 function EmptyState({ tab }: { tab: TabKey }) {
+  const { scheme } = useAppTheme();
   return (
-    <View style={[styles.list, styles.empty]}>
+    <View style={[styles.list, styles.empty, { backgroundColor: scheme.cardBackground }]}>
       <Ionicons
         name={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
         size={28}
-        color={Palette.iconMuted}
+        color={scheme.textMuted}
       />
-      <Text style={styles.emptyTitle}>
+      <Text style={[styles.emptyTitle, { color: scheme.text }]}>
         {tab === 'upcoming' ? 'No upcoming transactions' : 'No completed transactions'}
       </Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptySubtitle, { color: scheme.textMuted }]}>
         {tab === 'upcoming'
           ? 'Schedule a recurring transaction to see future entries here.'
           : 'Add your first transaction to start building history.'}
@@ -110,13 +111,14 @@ function TransactionGroupedList({
   onSelect: (id: string) => void;
 }) {
   const groups = useMemo(() => groupByDay(transactions, reverse), [transactions, reverse]);
+  const { scheme } = useAppTheme();
 
   return (
     <View style={{ gap: 16 }}>
       {groups.map((group) => (
         <View key={group.key}>
-          <Text style={styles.groupHeader}>{group.label}</Text>
-          <View style={styles.list}>
+          <Text style={[styles.groupHeader, { color: scheme.textMuted }]}>{group.label}</Text>
+          <View style={[styles.list, { backgroundColor: scheme.cardBackground }]}>
             {group.items.map((tx, index) => (
               <TransactionRow
                 key={tx.id}
@@ -142,6 +144,7 @@ function TransactionRow({
   onPress: () => void;
 }) {
   const { getCategory } = useCategories();
+  const { scheme } = useAppTheme();
   const category = getCategory(tx.categoryId);
   const categoryName = category?.name ?? null;
   const sign = tx.mode === 'spent' ? '-' : '+';
@@ -161,7 +164,7 @@ function TransactionRow({
           {isGoalTx && goalColor && (
             <Ionicons name="flag" size={14} color={goalColor} />
           )}
-          <Text style={styles.rowTitle}>{tx.title}</Text>
+          <Text style={[styles.rowTitle, { color: scheme.text }]}>{tx.title}</Text>
         </View>
         <View style={styles.seriesBadge}>
           {isGoalTx && goalColor && (
@@ -172,20 +175,20 @@ function TransactionRow({
                   {tx.mode === 'spent' ? 'Contribution' : 'Withdrawal'}
                 </Text>
               </View>
-              {(categoryName || tx.seriesId) && <Text style={styles.rowMeta}>·</Text>}
+              {(categoryName || tx.seriesId) && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
             </>
           )}
           {category && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
-                <Text style={styles.rowMeta}>{categoryName}</Text>
+                <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
               </View>
             )}
           {tx.seriesId && (
             <>
-              {categoryName && <Text style={styles.rowMeta}>·</Text>}
-              <Ionicons name="repeat" size={12} color={Palette.textMuted} />
-              <Text style={styles.seriesBadgeText}>Recurring</Text>
+              {categoryName && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
+              <Ionicons name="repeat" size={12} color={scheme.textMuted} />
+              <Text style={[styles.seriesBadgeText, { color: scheme.textMuted }]}>Recurring</Text>
             </>
           )}
         </View>
@@ -198,7 +201,7 @@ function TransactionRow({
         {sign}
         {formatCentsDisplay(tx.amountCents)}
       </Text>
-      <Ionicons name="chevron-forward" size={16} color={Palette.iconMuted} />
+      <Ionicons name="chevron-forward" size={16} color={scheme.textMuted} />
     </Pressable>
   );
 }
