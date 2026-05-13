@@ -65,6 +65,9 @@ export default function GoalsScreen() {
           </View>
         ) : (
           <View style={styles.list}>
+            <Text style={[styles.paceHint, { color: scheme.textMuted }]}>
+              The ◎ marker on a goal's progress bar shows where you should be at today's date to stay on pace.
+            </Text>
             {goals.map((goal) => {
               const cat = getCategory(goal.categoryId);
               const color = cat?.color ?? Palette.brand;

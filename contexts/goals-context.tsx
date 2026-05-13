@@ -24,6 +24,8 @@ type GoalsContextValue = {
   replaceAll: (gs: Goal[]) => void;
   clearAll: () => void;
   getGoalByCategory: (categoryId: string | null) => Goal | null;
+  isRetiredGoalCategory: (categoryId: string | null | undefined) => boolean;
+  getRetiredGoalCategoryMeta: (categoryId: string | null | undefined) => { name: string; color: string } | null;
 };
 
 const GoalsContext = createContext<GoalsContextValue | null>(null);
@@ -31,19 +33,22 @@ const GoalsContext = createContext<GoalsContextValue | null>(null);
 export function GoalsProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const { addCategory, deleteCategory, renameCategory, setCategoryColor, setCategoryIcon } = useCategories();
+  const [retiredGoalCategories, setRetiredGoalCategories] = useState<Map<string, { name: string; color: string }>>(new Map());
+  const { addCategory, deleteCategory, renameCategory, setCategoryColor, setCategoryIcon, getCategory } = useCategories();
   const { addTransactions, transactions } = useTransactions();
 
   // Hydrate from storage on mount
   useEffect(() => {
     let cancelled = false;
-    AsyncStorage.getItem(STORAGE_KEYS.GOALS)
-      .then((raw) => {
+    Promise.all([
+      AsyncStorage.getItem(STORAGE_KEYS.GOALS),
+      AsyncStorage.getItem(STORAGE_KEYS.RETIRED_GOAL_CATEGORY_IDS),
+    ])
+      .then(([goalsRaw, retiredRaw]) => {
         if (cancelled) return;
-        if (raw) {
+        if (goalsRaw) {
           try {
-            const parsed = JSON.parse(raw) as Goal[];
-            // Forward-compat: fill in any missing fields
+            const parsed = JSON.parse(goalsRaw) as Goal[];
             const safe = parsed.map((g) => ({
               id: g.id ?? '',
               name: g.name ?? '',
@@ -55,6 +60,14 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
               creationMode: g.creationMode ?? 'fromWeekly',
             }));
             setGoals(safe);
+          } catch {
+            // corrupt — start fresh
+          }
+        }
+        if (retiredRaw) {
+          try {
+            const parsed = JSON.parse(retiredRaw) as Record<string, { name: string; color: string }>;
+            setRetiredGoalCategories(new Map(Object.entries(parsed)));
           } catch {
             // corrupt — start fresh
           }
@@ -72,6 +85,18 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     AsyncStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals)).catch(() => {});
   }, [goals, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(
+      STORAGE_KEYS.RETIRED_GOAL_CATEGORY_IDS,
+      JSON.stringify(Object.fromEntries(retiredGoalCategories)),
+    ).catch(() => {});
+  }, [retiredGoalCategories, hydrated]);
+
+  const retireGoalCategory = useCallback((categoryId: string, name: string, color: string) => {
+    setRetiredGoalCategories((prev) => new Map([...prev, [categoryId, { name, color }]]));
+  }, []);
 
   const addGoal = useCallback(
     (draft: GoalDraft): Goal | null => {
@@ -140,9 +165,11 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         ]);
       }
       setGoals((g) => g.filter((x) => x.id !== id));
+      const cat = getCategory(goal.categoryId);
+      retireGoalCategory(goal.categoryId, goal.name, cat?.color ?? '#888');
       deleteCategory(goal.categoryId);
     },
-    [goals, transactions, addTransactions, deleteCategory],
+    [goals, transactions, addTransactions, deleteCategory, retireGoalCategory, getCategory],
   );
 
   const completeGoal = useCallback(
@@ -150,9 +177,11 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       const goal = goals.find((g) => g.id === id);
       if (!goal) return;
       setGoals((g) => g.filter((x) => x.id !== id));
+      const cat = getCategory(goal.categoryId);
+      retireGoalCategory(goal.categoryId, goal.name, cat?.color ?? '#888');
       deleteCategory(goal.categoryId);
     },
-    [goals, deleteCategory],
+    [goals, deleteCategory, retireGoalCategory, getCategory],
   );
 
   const contributeToGoal = useCallback(
@@ -216,6 +245,22 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     [goals],
   );
 
+  const isRetiredGoalCategory = useCallback(
+    (categoryId: string | null | undefined) => {
+      if (!categoryId) return false;
+      return retiredGoalCategories.has(categoryId);
+    },
+    [retiredGoalCategories],
+  );
+
+  const getRetiredGoalCategoryMeta = useCallback(
+    (categoryId: string | null | undefined): { name: string; color: string } | null => {
+      if (!categoryId) return null;
+      return retiredGoalCategories.get(categoryId) ?? null;
+    },
+    [retiredGoalCategories],
+  );
+
   const value = useMemo(
     () => ({
       goals,
@@ -230,6 +275,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       replaceAll,
       clearAll,
       getGoalByCategory,
+      isRetiredGoalCategory,
+      getRetiredGoalCategoryMeta,
     }),
     [
       goals,
@@ -244,6 +291,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       replaceAll,
       clearAll,
       getGoalByCategory,
+      isRetiredGoalCategory,
+      getRetiredGoalCategoryMeta,
     ],
   );
 

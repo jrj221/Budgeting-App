@@ -10,6 +10,7 @@ import {
 } from '@/components/add-transaction-card.presenter';
 import { EditTransactionSheet } from '@/components/edit-transaction-sheet';
 import { useCategories } from '@/contexts/categories-context';
+import { useGoals } from '@/contexts/goals-context';
 import { useAppTheme } from '@/contexts/theme-context';
 import { useTransactions } from '@/contexts/transactions-context';
 import { Palette } from '@/constants/colors';
@@ -144,20 +145,23 @@ function TransactionRow({
   onPress: () => void;
 }) {
   const { getCategory } = useCategories();
+  const { isRetiredGoalCategory } = useGoals();
   const { scheme } = useAppTheme();
   const category = getCategory(tx.categoryId);
   const categoryName = category?.name ?? null;
   const sign = tx.mode === 'spent' ? '-' : '+';
   const isGoalTx = !!category?.isGoal;
   const goalColor = category?.color;
+  const isRetired = isRetiredGoalCategory(tx.categoryId);
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={isRetired ? undefined : onPress}
       style={[
         styles.row,
         isLast && styles.rowLast,
         isGoalTx && goalColor ? { borderLeftWidth: 4, borderLeftColor: goalColor, paddingLeft: 12 } : null,
+        isRetired && { opacity: 0.45 },
       ]}>
       <View style={styles.rowMain}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -201,7 +205,7 @@ function TransactionRow({
         {sign}
         {formatCentsDisplay(tx.amountCents)}
       </Text>
-      <Ionicons name="chevron-forward" size={16} color={scheme.textMuted} />
+      <Ionicons name={isRetired ? 'lock-closed-outline' : 'chevron-forward'} size={16} color={scheme.textMuted} />
     </Pressable>
   );
 }

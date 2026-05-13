@@ -12,6 +12,7 @@ import { LineChart, LinePoint } from "@/components/charts/line-chart";
 import { PieChart, PieSlice } from "@/components/charts/pie-chart";
 import { Palette } from "@/constants/colors";
 import { useCategories } from "@/contexts/categories-context";
+import { useGoals } from "@/contexts/goals-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { TOUR_STEPS, useTour } from "@/contexts/tour-context";
 import { useTransactions } from "@/contexts/transactions-context";
@@ -27,6 +28,7 @@ type PieFilter =
 export default function OverviewScreen() {
 	const { transactions } = useTransactions();
 	const { categories } = useCategories();
+	const { getRetiredGoalCategoryMeta } = useGoals();
 	const { scheme } = useAppTheme();
 	const { stepIndex } = useTour();
 	const { width } = useWindowDimensions();
@@ -72,8 +74,8 @@ export default function OverviewScreen() {
 
 	const lineData = useMemo(() => buildFutureCashflow(transactions), [transactions]);
 	const pieData = useMemo(
-		() => buildCategoryDistribution(transactions, categories, pieFilter),
-		[transactions, categories, pieFilter],
+		() => buildCategoryDistribution(transactions, categories, pieFilter, getRetiredGoalCategoryMeta),
+		[transactions, categories, pieFilter, getRetiredGoalCategoryMeta],
 	);
 	const availableMonths = useMemo(() => listSpentMonths(transactions), [transactions]);
 
@@ -386,7 +388,7 @@ function listSpentMonths(transactions: Transaction[]): { year: number; month: nu
 
 type PieEntry = PieSlice;
 
-function buildCategoryDistribution(transactions: Transaction[], categories: Category[], filter: PieFilter): PieEntry[] {
+function buildCategoryDistribution(transactions: Transaction[], categories: Category[], filter: PieFilter, getRetiredMeta: (id: string | null | undefined) => { name: string; color: string } | null): PieEntry[] {
 	const today = startOfDay(new Date());
 	const todayEnd = new Date(today);
 	todayEnd.setHours(23, 59, 59, 999);
@@ -411,7 +413,8 @@ function buildCategoryDistribution(transactions: Transaction[], categories: Cate
 		} else {
 			const cat = categories.find((c) => c.id === key);
 			if (!cat) {
-				entries.push({ key, value, color: Palette.uncategorized, label: "Removed category" });
+				const retired = getRetiredMeta(key);
+				entries.push({ key, value, color: retired?.color ?? Palette.uncategorized, label: retired?.name ?? "Removed category" });
 			} else {
 				entries.push({ key, value, color: cat.color, label: cat.name });
 			}

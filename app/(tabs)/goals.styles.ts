@@ -42,6 +42,12 @@ export const styles = StyleSheet.create({
   list: {
     gap: 14,
   },
+  paceHint: {
+    fontSize: 12,
+    color: Palette.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: 4,
+  },
   empty: {
     backgroundColor: Palette.cardBackground,
     borderRadius: 20,

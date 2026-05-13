@@ -81,9 +81,11 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
     .reduce((sum, tx) => sum + tx.amountCents, 0);
   const plannedFraction = goal.targetCents > 0 ? futureCents / goal.targetCents : 0;
 
-  // Pace marker: how far along they should be right now
+  // Pace marker: only show when week > 0 and user isn't already exactly on expected pace
   const paceMarkerFraction =
-    goal.targetCents > 0 ? Math.min(1, expectedNet / goal.targetCents) : undefined;
+    goal.targetCents > 0 && completedWeeks > 0 && progress.netCents !== expectedNet
+      ? Math.min(1, expectedNet / goal.targetCents)
+      : undefined;
 
   const [contributeOpen, setContributeOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
