@@ -4,8 +4,8 @@ import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tourStyles as styles } from "@/components/tour-overlay.styles";
-import { TOUR_STEPS, useTour } from "@/contexts/tour-context";
 import { useAppTheme } from "@/contexts/theme-context";
+import { TOUR_STEPS, useTour } from "@/contexts/tour-context";
 
 const TAB_COUNT = 5;
 const TAB_BAR_CONTENT_HEIGHT = 49;
@@ -58,12 +58,17 @@ export function TourOverlay() {
 			<View style={styles.fill} pointerEvents="auto">
 				<Pressable style={[styles.fill, { backgroundColor: "rgba(15, 23, 42, 0.25)" }]} />
 				<View style={styles.centerWrap} pointerEvents="box-none">
-					<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
+					<View
+						style={[
+							styles.card,
+							{ backgroundColor: scheme.surface, borderColor: scheme.border, borderWidth: 1 },
+						]}
+					>
 						<Text style={styles.cardEyebrow}>
 							Step {stepNumber} of {TOTAL_INFO_STEPS}
 						</Text>
-						<Text style={styles.cardTitle}>{step.title}</Text>
-						<Text style={styles.cardBody}>{step.body}</Text>
+						<Text style={[styles.cardTitle, { color: scheme.text }]}>{step.title}</Text>
+						<Text style={[styles.cardBody, { color: scheme.textMuted }]}>{step.body}</Text>
 						<View style={styles.cardActions}>
 							<Pressable onPress={skip} style={styles.skipBtn} hitSlop={8}>
 								<Text style={styles.skipText}>Skip tour</Text>
@@ -161,9 +166,9 @@ export function TourOverlay() {
 					width: tooltipMaxWidth,
 				}}
 			>
-				<View style={[styles.tooltip, { backgroundColor: scheme.cardBackground }]}>
-					<Text style={styles.tooltipTitle}>{step.title}</Text>
-					<Text style={styles.tooltipBody}>{step.body}</Text>
+				<View style={[styles.tooltip, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+					<Text style={[styles.tooltipTitle, { color: scheme.text }]}>{step.title}</Text>
+					<Text style={[styles.tooltipBody, { color: scheme.textMuted }]}>{step.body}</Text>
 					<View style={styles.tooltipFooter}>
 						<Text style={styles.tooltipStep}>
 							Step {stepNumber} of {TOTAL_INFO_STEPS}

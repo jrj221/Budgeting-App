@@ -162,7 +162,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
 export const DEFAULT_COLOR_SCHEME_ID = "default";
 
 export function isColorSchemeDark(scheme: ColorScheme): boolean {
-	const bg = scheme.background.replace('#', '');
+	const bg = scheme.background.replace("#", "");
 	if (bg.length !== 6) return false;
 	const r = parseInt(bg.slice(0, 2), 16);
 	const g = parseInt(bg.slice(2, 4), 16);

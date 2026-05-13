@@ -74,8 +74,8 @@ export const tourStyles = StyleSheet.create({
 		fontWeight: "600",
 	},
 	tooltip: {
-		backgroundColor: Palette.cardBackground,
 		borderRadius: 14,
+		borderWidth: 1,
 		padding: 14,
 		gap: 4,
 		shadowColor: Palette.shadow,
@@ -87,11 +87,9 @@ export const tourStyles = StyleSheet.create({
 	tooltipTitle: {
 		fontSize: 14,
 		fontWeight: "700",
-		color: Palette.text,
 	},
 	tooltipBody: {
 		fontSize: 13,
-		color: Palette.textMuted,
 		lineHeight: 18,
 	},
 	tooltipFooter: {
