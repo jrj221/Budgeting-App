@@ -251,7 +251,10 @@ function FilterMenu({ visible, options, current, onSelect, onClose }: FilterMenu
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
 			<Pressable style={chartStyles.menuOverlay} onPress={onClose}>
 				<Pressable
-					style={[chartStyles.menuCard, { backgroundColor: scheme.cardBackground }]}
+					style={[
+						chartStyles.menuCard,
+						{ backgroundColor: scheme.surface, borderWidth: 1, borderColor: scheme.border },
+					]}
 					onPress={() => {}}
 				>
 					<ScrollView style={chartStyles.menuScroll}>

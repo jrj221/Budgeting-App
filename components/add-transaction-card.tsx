@@ -151,7 +151,7 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 					<Text
 						style={[
 							styles.rowValue,
-							{ color: scheme.text },
+							{ color: scheme.text, fontSize: 10 },
 							!presenter.repeat.enabled && styles.rowValueMuted,
 						]}
 					>
