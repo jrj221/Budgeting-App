@@ -3,7 +3,7 @@
  * Bump CURRENT_VERSION and add a migration whenever a field is added/changed/removed.
  */
 
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 
 export type StoredCategory = {
   id: string;

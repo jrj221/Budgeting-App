@@ -8,6 +8,7 @@ import {
   isCategoryNameValid,
 } from '@/components/add-transaction-card.presenter';
 import { pickNextCategoryColor } from '@/constants/colors';
+import { loadStorageData } from '@/storage';
 import { STORAGE_KEYS } from '@/storage/keys';
 
 type CategoriesContextValue = {
@@ -33,33 +34,13 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [hydrated, setHydrated] = useState(false);
 
-  // Hydrate from storage on mount
+  // Hydrate from storage on mount (via loadStorageData so migrations run first)
   useEffect(() => {
     let cancelled = false;
-    AsyncStorage.getItem(STORAGE_KEYS.CATEGORIES)
-      .then((raw) => {
+    loadStorageData()
+      .then((data) => {
         if (cancelled) return;
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw) as Category[];
-            // Forward-compat: fill in any missing fields
-            const safe = parsed.map((c) => {
-              const defaultMatch = DEFAULT_CATEGORIES.find((d) => d.id === c.id);
-              return {
-                id: c.id ?? '',
-                name: c.name ?? '',
-                color: c.color ?? '#888888',
-                icon: c.icon ?? defaultMatch?.icon ?? 'tag',
-                weeklyBudgetCents: c.weeklyBudgetCents ?? null,
-                monthlyOverrideCents: c.monthlyOverrideCents ?? null,
-                isGoal: c.isGoal ?? false,
-              };
-            });
-            setCategories(safe);
-          } catch {
-            // corrupt — keep defaults
-          }
-        }
+        if (data.categories.length > 0) setCategories(data.categories);
         setHydrated(true);
       })
       .catch(() => {

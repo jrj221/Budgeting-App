@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
+	Image,
 	InputAccessoryView,
 	Keyboard,
 	KeyboardAvoidingView,
@@ -80,8 +81,8 @@ export function WelcomeScreen() {
 		}
 		Keyboard.dismiss();
 		await markWelcomeSeen();
+		router.replace("/");
 		if (withTour) {
-			router.replace("/");
 			startTour();
 		}
 	};
@@ -97,7 +98,7 @@ export function WelcomeScreen() {
 						showsVerticalScrollIndicator={false}
 					>
 						<View style={styles.logoBubble}>
-							<Ionicons name="wallet-outline" size={28} color="#fff" />
+							<Image source={require("@/assets/images/app_icon.png")} style={{ width: 40, height: 40 }} />
 						</View>
 
 						<View style={{ gap: 6 }}>

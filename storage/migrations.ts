@@ -55,8 +55,19 @@ export const MIGRATIONS: Migration[] = [
       schemeId: data.schemeId ?? null,
     }),
   },
-  // Future migrations go here, e.g.:
-  // { fromVersion: 1, migrate: (data) => ({ ...data, schemaVersion: 2, newField: 'default' }) },
+  // v2: reset any default category that ended up with the wrong icon (e.g. "tag" or "music"
+  // due to the icon field missing when the schema was first written).
+  {
+    fromVersion: 1,
+    migrate: (data) => ({
+      ...data,
+      schemaVersion: 2,
+      categories: data.categories.map((c) => {
+        const def = DEFAULT_CATEGORIES.find((d) => d.id === c.id);
+        return def ? { ...c, icon: def.icon } : c;
+      }),
+    }),
+  },
 ];
 
 /**
