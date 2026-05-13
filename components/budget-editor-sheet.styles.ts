@@ -19,6 +19,11 @@ export const budgetEditorStyles = StyleSheet.create({
     paddingBottom: 24,
     gap: 12,
     maxHeight: '92%',
+    shadowColor: Palette.shadow,
+    shadowOpacity: 0.14,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 16,
+    elevation: 10,
   },
   dragHandleArea: {
     paddingTop: 4,

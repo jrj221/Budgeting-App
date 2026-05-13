@@ -107,3 +107,48 @@ export function generateSampleTransactions(): Transaction[] {
 
   return out;
 }
+
+export function generateSampleGoalTransactions(categoryId: string, goalName: string): Transaction[] {
+  const now = new Date();
+  const out: Transaction[] = [];
+
+  const contribution = (daysOffset: number, amountCents: number) => {
+    out.push({
+      id: makeId('tx-sample'),
+      seriesId: null,
+      mode: 'spent',
+      amountCents,
+      title: `Save toward ${goalName}`,
+      date: dayOffsetIso(daysOffset, now),
+      categoryId,
+    });
+  };
+
+  // Eight weeks of past contributions
+  contribution(-7, 5000);
+  contribution(-14, 5000);
+  contribution(-21, 5000);
+  contribution(-28, 5000);
+  contribution(-35, 5000);
+  contribution(-42, 5000);
+  contribution(-49, 5000);
+  contribution(-56, 5000);
+
+  // One past withdrawal
+  out.push({
+    id: makeId('tx-sample'),
+    seriesId: null,
+    mode: 'earned',
+    amountCents: 10000,
+    title: `Withdraw from ${goalName}`,
+    date: dayOffsetIso(-30, now),
+    categoryId,
+  });
+
+  // A few future scheduled contributions
+  contribution(7, 5000);
+  contribution(14, 5000);
+  contribution(21, 5000);
+
+  return out;
+}

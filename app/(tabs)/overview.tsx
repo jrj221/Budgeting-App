@@ -157,6 +157,9 @@ export default function OverviewScreen() {
 									size={pieSize}
 									innerRatio={0.55}
 									formatValue={(v) => formatCentsDisplay(v)}
+									innerColor={scheme.cardBackground}
+									labelColor={scheme.text}
+									labelMutedColor={scheme.textMuted}
 								/>
 								<Text style={[styles.totalLabel, { color: scheme.textMuted }]}>Total</Text>
 								<Text style={[styles.totalAmount, { color: scheme.text }]}>{formatCentsDisplay(totalSpent)}</Text>

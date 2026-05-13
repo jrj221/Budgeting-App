@@ -10,19 +10,44 @@ import { useGoals } from "@/contexts/goals-context";
 import { useOnboarding } from "@/contexts/onboarding-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { useTransactions } from "@/contexts/transactions-context";
-import { generateSampleTransactions, SAMPLE_CATEGORY_BUDGETS } from "@/utils/sample-transactions";
+import { generateSampleGoalTransactions, generateSampleTransactions, SAMPLE_CATEGORY_BUDGETS } from "@/utils/sample-transactions";
 
 export default function SettingsScreen() {
 	const { scheme: current, schemes, setSchemeId } = useAppTheme();
 	const { transactions, addTransactions, clearAll } = useTransactions();
 	const { setCategoryBudget } = useCategories();
-	const { clearAll: clearAllGoals } = useGoals();
+	const { clearAll: clearAllGoals, addGoal, contributeToGoal } = useGoals();
 	const { resetWelcome } = useOnboarding();
 
 	const onLoadSample = () => {
 		addTransactions(generateSampleTransactions());
 		for (const b of SAMPLE_CATEGORY_BUDGETS) {
 			setCategoryBudget(b.categoryId, b.weeklyCents, b.monthlyOverrideCents);
+		}
+		const laptopGoal = addGoal({
+			name: 'New laptop',
+			color: '#22c55e',
+			icon: 'laptop',
+			targetCents: 120000,
+			mode: 'fromWeeks',
+			weeksTarget: 24,
+			weeklyContributionCents: 5000,
+		});
+		if (laptopGoal) {
+			contributeToGoal(laptopGoal.id, 25000);
+			addTransactions(generateSampleGoalTransactions(laptopGoal.categoryId, laptopGoal.name));
+		}
+		const travelGoal = addGoal({
+			name: 'Travel fund',
+			color: '#f59e0b',
+			icon: 'plane',
+			targetCents: 200000,
+			mode: 'fromWeekly',
+			weeksTarget: 40,
+			weeklyContributionCents: 5000,
+		});
+		if (travelGoal) {
+			addTransactions(generateSampleGoalTransactions(travelGoal.categoryId, travelGoal.name));
 		}
 	};
 

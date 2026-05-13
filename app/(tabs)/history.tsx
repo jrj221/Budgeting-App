@@ -145,49 +145,57 @@ function TransactionRow({
   onPress: () => void;
 }) {
   const { getCategory } = useCategories();
-  const { isRetiredGoalCategory } = useGoals();
+  const { isRetiredGoalCategory, getRetiredGoalCategoryMeta } = useGoals();
   const { scheme } = useAppTheme();
   const category = getCategory(tx.categoryId);
-  const categoryName = category?.name ?? null;
+  const retiredMeta = getRetiredGoalCategoryMeta(tx.categoryId);
+  const categoryName = category?.name ?? retiredMeta?.name ?? null;
   const sign = tx.mode === 'spent' ? '-' : '+';
-  const isGoalTx = !!category?.isGoal;
-  const goalColor = category?.color;
   const isRetired = isRetiredGoalCategory(tx.categoryId);
+  const isGoalReturn = !tx.categoryId && tx.mode === 'earned' && tx.title.startsWith('Returned from ');
+  const isGoalTx = !!category?.isGoal || isRetired;
+  const goalColor = category?.color ?? retiredMeta?.color;
+  const isLocked = isRetired || isGoalReturn;
+  const showGoalBadge = (isGoalTx && !!goalColor) || isGoalReturn;
+  const badgeColor = goalColor ?? Palette.uncategorized;
+  const badgeLabel = isGoalReturn ? 'Goal deleted' : tx.mode === 'spent' ? 'Contribution' : 'Withdrawal';
 
   return (
     <Pressable
-      onPress={isRetired ? undefined : onPress}
+      onPress={isLocked ? undefined : onPress}
       style={[
         styles.row,
         isLast && styles.rowLast,
-        isGoalTx && goalColor ? { borderLeftWidth: 4, borderLeftColor: goalColor, paddingLeft: 12 } : null,
-        isRetired && { opacity: 0.45 },
+        showGoalBadge ? { borderLeftWidth: 4, borderLeftColor: badgeColor, paddingLeft: 12 } : null,
+        isLocked && { opacity: 0.45 },
       ]}>
       <View style={styles.rowMain}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {isGoalTx && goalColor && (
-            <Ionicons name="flag" size={14} color={goalColor} />
+          {showGoalBadge && (
+            <Ionicons name="flag" size={14} color={badgeColor} />
           )}
           <Text style={[styles.rowTitle, { color: scheme.text }]}>{tx.title}</Text>
         </View>
         <View style={styles.seriesBadge}>
-          {isGoalTx && goalColor && (
+          {showGoalBadge && (
             <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: goalColor }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: badgeColor }}>
                 <Ionicons name={tx.mode === 'spent' ? 'arrow-up' : 'arrow-down'} size={9} color="#fff" />
                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
-                  {tx.mode === 'spent' ? 'Contribution' : 'Withdrawal'}
+                  {badgeLabel}
                 </Text>
               </View>
               {(categoryName || tx.seriesId) && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
             </>
           )}
-          {category && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
-                <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
-              </View>
-            )}
+          {category ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
+              <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
+            </View>
+          ) : retiredMeta ? (
+            <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{retiredMeta.name}</Text>
+          ) : null}
           {tx.seriesId && (
             <>
               {categoryName && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
@@ -205,7 +213,7 @@ function TransactionRow({
         {sign}
         {formatCentsDisplay(tx.amountCents)}
       </Text>
-      <Ionicons name={isRetired ? 'lock-closed-outline' : 'chevron-forward'} size={16} color={scheme.textMuted} />
+      <Ionicons name={isLocked ? 'lock-closed-outline' : 'chevron-forward'} size={16} color={scheme.textMuted} />
     </Pressable>
   );
 }

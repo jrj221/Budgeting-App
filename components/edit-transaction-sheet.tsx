@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   InputAccessoryView,
@@ -23,13 +23,12 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import {
-  formatAmountDisplay,
   formatCentsDisplay,
   formatDateLabel,
-  sanitizeAmountDigits,
   Transaction,
   TransactionMode,
 } from '@/components/add-transaction-card.presenter';
+import { AmountInput } from '@/components/amount-input';
 import { editStyles as styles } from '@/components/edit-transaction-sheet.styles';
 import { isColorSchemeDark, ModeColors, Palette } from '@/constants/colors';
 import { useCategories } from '@/contexts/categories-context';
@@ -69,7 +68,6 @@ export function EditTransactionSheet({
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const amountInputRef = useRef<TextInput>(null);
 
   const translateY = useSharedValue(0);
   const baseY = useSharedValue(0);
@@ -288,23 +286,14 @@ export function EditTransactionSheet({
               })}
             </View>
 
-            <Pressable
-              style={styles.amountWrap}
-              onPress={() => amountInputRef.current?.focus()}>
-              <Text style={[styles.amount, { color: scheme.text }, !amountDigits && styles.amountMuted]}>
-                {formatAmountDisplay(amountDigits)}
-              </Text>
-              <TextInput
-                ref={amountInputRef}
-                value={amountDigits}
-                onChangeText={(v) => setAmountDigits(sanitizeAmountDigits(v))}
-                keyboardType="number-pad"
-                style={styles.hiddenInput}
-                caretHidden
-                maxLength={9}
-                inputAccessoryViewID={EDIT_NUMPAD_ACCESSORY_ID}
-              />
-            </Pressable>
+            <AmountInput
+              digits={amountDigits}
+              onChangeDigits={setAmountDigits}
+              accessoryViewId={EDIT_NUMPAD_ACCESSORY_ID}
+              wrapStyle={styles.amountWrap}
+              textStyle={[styles.amount, { color: scheme.text }]}
+              placeholderStyle={styles.amountMuted}
+            />
 
             {isGoalTx ? (
               <View style={[styles.titleInput, { backgroundColor: scheme.surface, justifyContent: 'center' }]}>

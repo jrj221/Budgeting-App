@@ -5,7 +5,7 @@ import { useCategories } from "@/contexts/categories-context";
 import { useGoals } from "@/contexts/goals-context";
 import { useTransactions } from "@/contexts/transactions-context";
 import { Goal } from "@/utils/goal-calc";
-import { generateSampleTransactions, SAMPLE_CATEGORY_BUDGETS } from "@/utils/sample-transactions";
+import { generateSampleGoalTransactions, generateSampleTransactions, SAMPLE_CATEGORY_BUDGETS } from "@/utils/sample-transactions";
 
 export type TourStep =
 	| { kind: "info"; title: string; body: string; tabIndex: number }
@@ -132,7 +132,22 @@ export function TourProvider({ children }: { children: ReactNode }) {
 			weeksTarget: 24,
 			weeklyContributionCents: 5000,
 		});
-		if (sampleGoal) contributeToGoal(sampleGoal.id, 25000);
+		if (sampleGoal) {
+			contributeToGoal(sampleGoal.id, 25000);
+			addTransactions(generateSampleGoalTransactions(sampleGoal.categoryId, sampleGoal.name));
+		}
+		const travelGoal = addGoal({
+			name: "Travel fund",
+			color: "#f59e0b",
+			icon: "plane",
+			targetCents: 200000,
+			mode: "fromWeekly",
+			weeksTarget: 40,
+			weeklyContributionCents: 5000,
+		});
+		if (travelGoal) {
+			addTransactions(generateSampleGoalTransactions(travelGoal.categoryId, travelGoal.name));
+		}
 		setStepIndex(0);
 	}, [transactions, categories, goals, addTransactions, setCategoryBudget, addGoal, contributeToGoal]);
 

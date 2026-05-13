@@ -1,6 +1,6 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { StyleProp, TextStyle } from "react-native";
 import {
 	InputAccessoryView,
@@ -21,7 +21,6 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 
 
 import {
 	Category,
-	formatAmountDisplay,
 	formatDateLabel,
 	formatRepeatSummary,
 	MODE_LABELS,
@@ -34,6 +33,7 @@ import {
 	TransactionMode,
 } from "@/components/add-transaction-card.presenter";
 import { styles } from "@/components/add-transaction-card.styles";
+import { AmountInput } from "@/components/amount-input";
 import { ColorPickerModal } from "@/components/color-picker-modal";
 import { IconPickerModal } from "@/components/icon-picker-modal";
 import { isColorSchemeDark, ModeColors, Palette, pickNextCategoryColor } from "@/constants/colors";
@@ -50,28 +50,18 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 	const presenter = useAddTransactionCard({ onSubmit });
 	const { scheme } = useAppTheme();
 	const isDark = isColorSchemeDark(scheme);
-	const amountInputRef = useRef<TextInput>(null);
-
 	return (
 		<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
 			<ModeToggle mode={presenter.draft.mode} onChange={presenter.setMode} />
 
-			<Pressable style={styles.amountWrap} onPress={() => amountInputRef.current?.focus()}>
-				<Text style={[styles.amount, { color: scheme.text }, !presenter.draft.amountDigits && styles.amountMuted]}>
-					{formatAmountDisplay(presenter.draft.amountDigits)}
-				</Text>
-				<TextInput
-					ref={amountInputRef}
-					value={presenter.draft.amountDigits}
-					onChangeText={presenter.setAmountFromInput}
-					keyboardType="number-pad"
-					keyboardAppearance={isDark ? 'dark' : 'light'}
-					style={styles.hiddenInput}
-					caretHidden
-					maxLength={9}
-					inputAccessoryViewID={NUMPAD_ACCESSORY_ID}
-				/>
-			</Pressable>
+			<AmountInput
+				digits={presenter.draft.amountDigits}
+				onChangeDigits={presenter.setAmountFromInput}
+				accessoryViewId={NUMPAD_ACCESSORY_ID}
+				wrapStyle={styles.amountWrap}
+				textStyle={[styles.amount, { color: scheme.text }]}
+				placeholderStyle={styles.amountMuted}
+			/>
 
 			<TextInput
 				style={[styles.titleInput, { backgroundColor: scheme.surface, color: scheme.text }]}
@@ -94,7 +84,9 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 					<Text style={[styles.rowLabel, { color: scheme.text }]}>Date</Text>
 				</View>
 				<View style={styles.rowRight}>
-					<Text style={[styles.rowValue, { color: scheme.text }]}>{formatDateLabel(presenter.draft.date)}</Text>
+					<Text style={[styles.rowValue, { color: scheme.text }]}>
+						{formatDateLabel(presenter.draft.date)}
+					</Text>
 					<Ionicons
 						name={presenter.isDatePickerOpen ? "chevron-up" : "chevron-down"}
 						size={18}
@@ -108,8 +100,8 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 						value={presenter.draft.date}
 						mode="date"
 						display="spinner"
-						themeVariant="light"
-						textColor={Palette.text}
+						themeVariant={isDark ? "dark" : "light"}
+						textColor={scheme.text}
 						onChange={(_, d) => {
 							if (d) presenter.setDate(d);
 						}}
@@ -130,7 +122,13 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 						<Text style={[styles.rowLabel, { color: scheme.text }]}>Category</Text>
 					</View>
 					<View style={styles.rowRight}>
-						<Text style={[styles.rowValue, { color: scheme.text }, !presenter.selectedCategory && styles.rowValueMuted]}>
+						<Text
+							style={[
+								styles.rowValue,
+								{ color: scheme.text },
+								!presenter.selectedCategory && styles.rowValueMuted,
+							]}
+						>
 							{presenter.selectedCategory?.name ?? "None"}
 						</Text>
 						<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
@@ -150,7 +148,13 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 					<Text style={[styles.rowLabel, { color: scheme.text }]}>Repeat</Text>
 				</View>
 				<View style={styles.rowRight}>
-					<Text style={[styles.rowValue, { color: scheme.text }, !presenter.repeat.enabled && styles.rowValueMuted]}>
+					<Text
+						style={[
+							styles.rowValue,
+							{ color: scheme.text },
+							!presenter.repeat.enabled && styles.rowValueMuted,
+						]}
+					>
 						{presenter.repeat.enabled ? formatRepeatSummary(presenter.repeat) : "Never"}
 					</Text>
 					<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
@@ -199,7 +203,12 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 
 			{Platform.OS === "ios" && (
 				<InputAccessoryView nativeID={NUMPAD_ACCESSORY_ID}>
-					<View style={[styles.kbAccessory, { backgroundColor: scheme.surface, borderTopColor: scheme.border }]}>
+					<View
+						style={[
+							styles.kbAccessory,
+							{ backgroundColor: scheme.background, borderTopColor: scheme.border },
+						]}
+					>
 						<Pressable onPress={() => Keyboard.dismiss()} hitSlop={10} style={styles.kbAccessoryBtn}>
 							<Ionicons name="checkmark" size={22} color={Palette.brand} />
 							<Text style={styles.kbAccessoryText}>Done</Text>
@@ -261,91 +270,138 @@ function CategorySheet(props: CategorySheetProps) {
 
 	return (
 		<Modal visible={props.visible} animationType="slide" transparent onRequestClose={props.onClose}>
-			<KeyboardAvoidingView
-				style={{ flex: 1 }}
-				behavior={Platform.OS === "ios" ? "padding" : undefined}
-			>
+			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
 				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
-					<Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheet.animatedStyle]}>
+					<Animated.View
+						style={[
+							styles.sheet,
+							{ backgroundColor: scheme.background },
+							sheet.animatedStyle,
+							props.isEditing && { paddingBottom: 24, marginBottom: 0 },
+						]}
+					>
 						<Pressable onPress={() => {}}>
 							<GestureDetector gesture={sheet.gesture}>
 								<View style={styles.sheetGrabber}>
 									<View style={styles.sheetHandle} />
 									<View style={[styles.sheetHeader, { borderBottomColor: scheme.border }]}>
-									<Pressable onPress={props.onClose} hitSlop={10}>
-										<Text style={[styles.sheetCancel, { color: scheme.text }]}>Cancel</Text>
-									</Pressable>
-									<Text style={[styles.sheetTitle, { color: scheme.text }]}>Category</Text>
-									<Pressable onPress={props.onToggleEdit} hitSlop={10}>
-										<Text style={styles.sheetEdit}>{props.isEditing ? "Done" : "Edit"}</Text>
-									</Pressable>
+										<Pressable onPress={props.onClose} hitSlop={10}>
+											<Text style={[styles.sheetCancel, { color: scheme.text }]}>Cancel</Text>
+										</Pressable>
+										<Text style={[styles.sheetTitle, { color: scheme.text }]}>Category</Text>
+										<Pressable onPress={props.onToggleEdit} hitSlop={10}>
+											<Text style={styles.sheetEdit}>{props.isEditing ? "Done" : "Edit"}</Text>
+										</Pressable>
+									</View>
 								</View>
-							</View>
-						</GestureDetector>
+							</GestureDetector>
 
-						<ScrollView
-							style={{ maxHeight: listMaxHeight }}
-							keyboardShouldPersistTaps="handled"
-							showsVerticalScrollIndicator={false}
-						>
-							{props.isEditing ? (
-								<View>
-									{props.categories.filter((c) => !c.isGoal).map((cat) => (
-										<EditableCategoryRow
-											key={cat.id}
-											category={cat}
-											onDelete={() => props.onDelete(cat.id)}
-											onRename={(name) => props.onRename(cat.id, name)}
-											onSetColor={(c) => props.onSetColor(cat.id, c)}
-											onSetIcon={(ic) => props.onSetIcon(cat.id, ic)}
-										/>
-									))}
-								</View>
-							) : (
-								<View style={styles.catGrid}>
-									<Pressable
-										style={[styles.catGridCell, { backgroundColor: scheme.surface, borderColor: scheme.border }, props.selectedId === null && styles.catGridCellSelected, props.selectedId === null && { backgroundColor: scheme.cardBackground }]}
-										onPress={() => props.onSelect(null)}
-									>
-										<View style={[styles.catGridIcon, { backgroundColor: scheme.toggleTrack }]}>
-											<Ionicons name="ban" size={20} color={scheme.textMuted} />
-										</View>
-										<Text style={[styles.catGridLabel, { color: scheme.text }]} numberOfLines={1}>None</Text>
-									</Pressable>
-									{props.categories.filter((c) => !c.isGoal).map((cat) => {
-										const sel = props.selectedId === cat.id;
-										return (
-											<Pressable
-												key={cat.id}
-												style={[styles.catGridCell, { backgroundColor: scheme.surface, borderColor: scheme.border }, sel && styles.catGridCellSelected, sel && { backgroundColor: scheme.cardBackground }]}
-												onPress={() => props.onSelect(cat.id)}
+							<ScrollView
+								style={{ maxHeight: listMaxHeight }}
+								keyboardShouldPersistTaps="handled"
+								showsVerticalScrollIndicator={false}
+							>
+								{props.isEditing ? (
+									<View>
+										{props.categories
+											.filter((c) => !c.isGoal)
+											.map((cat) => (
+												<EditableCategoryRow
+													key={cat.id}
+													category={cat}
+													onDelete={() => props.onDelete(cat.id)}
+													onRename={(name) => props.onRename(cat.id, name)}
+													onSetColor={(c) => props.onSetColor(cat.id, c)}
+													onSetIcon={(ic) => props.onSetIcon(cat.id, ic)}
+												/>
+											))}
+									</View>
+								) : (
+									<View style={styles.catGrid}>
+										<Pressable
+											style={[
+												styles.catGridCell,
+												{ backgroundColor: scheme.surface, borderColor: scheme.border },
+												props.selectedId === null && styles.catGridCellSelected,
+												props.selectedId === null && { backgroundColor: scheme.cardBackground },
+											]}
+											onPress={() => props.onSelect(null)}
+										>
+											<View style={[styles.catGridIcon, { backgroundColor: scheme.toggleTrack }]}>
+												<Ionicons name="ban" size={20} color={scheme.textMuted} />
+											</View>
+											<Text
+												style={[styles.catGridLabel, { color: scheme.text }]}
+												numberOfLines={1}
 											>
-												<View style={[styles.catGridIcon, { backgroundColor: cat.color + "22" }]}>
-													<FontAwesome5 name={cat.icon as any} size={20} color={cat.color} solid />
-												</View>
-												<Text style={[styles.catGridLabel, { color: scheme.text }]} numberOfLines={1}>{cat.name}</Text>
-												{sel && (
-													<View style={styles.catGridCheck}>
-														<Ionicons name="checkmark-circle" size={16} color={Palette.brand} />
-													</View>
-												)}
-											</Pressable>
-										);
-									})}
-								</View>
+												None
+											</Text>
+										</Pressable>
+										{props.categories
+											.filter((c) => !c.isGoal)
+											.map((cat) => {
+												const sel = props.selectedId === cat.id;
+												return (
+													<Pressable
+														key={cat.id}
+														style={[
+															styles.catGridCell,
+															{
+																backgroundColor: scheme.surface,
+																borderColor: scheme.border,
+															},
+															sel && styles.catGridCellSelected,
+															sel && { backgroundColor: scheme.cardBackground },
+														]}
+														onPress={() => props.onSelect(cat.id)}
+													>
+														<View
+															style={[
+																styles.catGridIcon,
+																{ backgroundColor: cat.color + "22" },
+															]}
+														>
+															<FontAwesome5
+																name={cat.icon as any}
+																size={20}
+																color={cat.color}
+																solid
+															/>
+														</View>
+														<Text
+															style={[styles.catGridLabel, { color: scheme.text }]}
+															numberOfLines={1}
+														>
+															{cat.name}
+														</Text>
+														{sel && (
+															<View style={styles.catGridCheck}>
+																<Ionicons
+																	name="checkmark-circle"
+																	size={16}
+																	color={Palette.brand}
+																/>
+															</View>
+														)}
+													</Pressable>
+												);
+											})}
+									</View>
+								)}
+							</ScrollView>
+							{props.isEditing && (
+								<AddCategoryRow
+									name={props.newName}
+									existingColors={props.categories.map((c) => c.color)}
+									onChangeName={props.onChangeNewName}
+									onSubmit={(color: string, icon: string) => {
+										props.onAdd(color, icon);
+									}}
+								/>
 							)}
-						</ScrollView>
-						{props.isEditing && (
-							<AddCategoryRow
-								name={props.newName}
-								existingColors={props.categories.map((c) => c.color)}
-								onChangeName={props.onChangeNewName}
-								onSubmit={(color: string, icon: string) => { props.onAdd(color, icon); }}
-							/>
-						)}
-					</Pressable>
-				</Animated.View>
-			</Pressable>
+						</Pressable>
+					</Animated.View>
+				</Pressable>
 			</KeyboardAvoidingView>
 		</Modal>
 	);
@@ -388,18 +444,26 @@ function EditableCategoryRow({
 			</Pressable>
 			<View style={styles.sheetRowSelect}>
 				<View style={styles.categoryRowLeft}>
-					<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}>
+					<Pressable
+						onPress={() => setColorPickerOpen(true)}
+						hitSlop={6}
+						style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}
+					>
 						<View style={[styles.categoryDot, { backgroundColor: category.color }]} />
 						<View style={[styles.editColorBadge, { backgroundColor: scheme.cardBackground }]}>
 							<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
 						</View>
 					</Pressable>
-					<Pressable onPress={() => setIconPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: category.color + '18' }]}>
+					<Pressable
+						onPress={() => setIconPickerOpen(true)}
+						hitSlop={6}
+						style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}
+					>
 						<FontAwesome5 name={category.icon as any} size={14} color={category.color} solid />
 					</Pressable>
 					{editing ? (
 						<TextInput
-							style={[styles.sheetRowText, { flex: 1 }]}
+							style={[styles.sheetRowText, { flex: 1, color: scheme.text }]}
 							value={draftName}
 							onChangeText={setDraftName}
 							autoFocus
@@ -409,7 +473,7 @@ function EditableCategoryRow({
 						/>
 					) : (
 						<Pressable onPress={() => setEditing(true)} style={{ flex: 1 }}>
-							<Text style={styles.sheetRowText}>{category.name}</Text>
+							<Text style={[styles.sheetRowText, { color: scheme.text }]}>{category.name}</Text>
 						</Pressable>
 					)}
 				</View>
@@ -417,8 +481,21 @@ function EditableCategoryRow({
 					<Ionicons name="create-outline" size={18} color={Palette.iconMuted} />
 				</Pressable>
 			</View>
-			<ColorPickerModal visible={colorPickerOpen} initialColor={category.color} title={`Color for ${category.name}`} onClose={() => setColorPickerOpen(false)} onSelect={onSetColor} />
-			<IconPickerModal visible={iconPickerOpen} selected={category.icon} color={category.color} title={`Icon for ${category.name}`} onClose={() => setIconPickerOpen(false)} onSelect={onSetIcon} />
+			<ColorPickerModal
+				visible={colorPickerOpen}
+				initialColor={category.color}
+				title={`Color for ${category.name}`}
+				onClose={() => setColorPickerOpen(false)}
+				onSelect={onSetColor}
+			/>
+			<IconPickerModal
+				visible={iconPickerOpen}
+				selected={category.icon}
+				color={category.color}
+				title={`Icon for ${category.name}`}
+				onClose={() => setIconPickerOpen(false)}
+				onSelect={onSetIcon}
+			/>
 		</View>
 	);
 }
@@ -436,7 +513,7 @@ function AddCategoryRow({
 }) {
 	const { scheme } = useAppTheme();
 	const [color, setColor] = useState<string>(() => pickNextCategoryColor(existingColors));
-	const [icon, setIcon] = useState('tag');
+	const [icon, setIcon] = useState("tag");
 	const [colorPickerOpen, setColorPickerOpen] = useState(false);
 	const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
@@ -450,18 +527,26 @@ function AddCategoryRow({
 		if (!canAdd) return;
 		onSubmit(color, icon);
 		setColor(pickNextCategoryColor([...existingColors, color]));
-		setIcon('tag');
+		setIcon("tag");
 	};
 
 	return (
 		<View style={styles.addRow}>
-			<Pressable onPress={() => setColorPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}>
+			<Pressable
+				onPress={() => setColorPickerOpen(true)}
+				hitSlop={6}
+				style={[styles.editColorBtn, { backgroundColor: scheme.cardBackground }]}
+			>
 				<View style={[styles.categoryDot, { backgroundColor: color }]} />
 				<View style={[styles.editColorBadge, { backgroundColor: scheme.cardBackground }]}>
 					<Ionicons name="color-palette" size={10} color={Palette.iconMuted} />
 				</View>
 			</Pressable>
-			<Pressable onPress={() => setIconPickerOpen(true)} hitSlop={6} style={[styles.editColorBtn, { backgroundColor: color + '18' }]}>
+			<Pressable
+				onPress={() => setIconPickerOpen(true)}
+				hitSlop={6}
+				style={[styles.editColorBtn, { backgroundColor: color + "18" }]}
+			>
 				<FontAwesome5 name={icon as any} size={14} color={color} solid />
 			</Pressable>
 			<TextInput
@@ -476,8 +561,21 @@ function AddCategoryRow({
 			<Pressable onPress={submit} disabled={!canAdd} hitSlop={6}>
 				<Ionicons name="add-circle" size={30} color={canAdd ? Palette.brand : Palette.submitDisabled} />
 			</Pressable>
-			<ColorPickerModal visible={colorPickerOpen} initialColor={color} title="Pick a color" onClose={() => setColorPickerOpen(false)} onSelect={setColor} />
-			<IconPickerModal visible={iconPickerOpen} selected={icon} color={color} title="Pick an icon" onClose={() => setIconPickerOpen(false)} onSelect={setIcon} />
+			<ColorPickerModal
+				visible={colorPickerOpen}
+				initialColor={color}
+				title="Pick a color"
+				onClose={() => setColorPickerOpen(false)}
+				onSelect={setColor}
+			/>
+			<IconPickerModal
+				visible={iconPickerOpen}
+				selected={icon}
+				color={color}
+				title="Pick an icon"
+				onClose={() => setIconPickerOpen(false)}
+				onSelect={setIcon}
+			/>
 		</View>
 	);
 }
@@ -504,10 +602,7 @@ function RepeatSheet(props: RepeatSheetProps) {
 
 	return (
 		<Modal visible={props.visible} animationType="slide" transparent onRequestClose={props.onClose}>
-			<KeyboardAvoidingView
-				style={{ flex: 1 }}
-				behavior={Platform.OS === "ios" ? "padding" : undefined}
-			>
+			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
 				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
 					<Animated.View style={[styles.sheet, { backgroundColor: scheme.background }, sheet.animatedStyle]}>
 						<Pressable onPress={() => {}}>
@@ -525,10 +620,17 @@ function RepeatSheet(props: RepeatSheetProps) {
 							</GestureDetector>
 
 							<View style={styles.repeatBody}>
-								<View style={[styles.repeatToggleRow, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+								<View
+									style={[
+										styles.repeatToggleRow,
+										{ backgroundColor: scheme.surface, borderColor: scheme.border },
+									]}
+								>
 									<View style={styles.rowLeft}>
 										<Ionicons name="repeat" size={20} color={scheme.text} />
-										<Text style={[styles.rowLabel, { color: scheme.text }]}>Repeat this transaction</Text>
+										<Text style={[styles.rowLabel, { color: scheme.text }]}>
+											Repeat this transaction
+										</Text>
 									</View>
 									<Switch
 										value={props.repeat.enabled}
@@ -538,96 +640,127 @@ function RepeatSheet(props: RepeatSheetProps) {
 									/>
 								</View>
 
-							{props.repeat.enabled && (
-								<>
-									<View style={styles.repeatEveryRow}>
-										<Text style={[styles.repeatEveryLabel, { color: scheme.text }]}>Every</Text>
-										<NumberField
-											style={[styles.repeatNumberInput, { backgroundColor: scheme.surface, color: scheme.text }]}
-											value={props.repeat.every}
-											onCommit={props.onSetEvery}
-											maxLength={3}
-										/>
-										<View style={[styles.periodToggle, { backgroundColor: scheme.toggleTrack }]}>
-											{periodOptions.map((p) => {
-												const active = props.repeat.period === p;
+								{props.repeat.enabled && (
+									<>
+										<View style={styles.repeatEveryRow}>
+											<Text style={[styles.repeatEveryLabel, { color: scheme.text }]}>Every</Text>
+											<NumberField
+												style={[
+													styles.repeatNumberInput,
+													{ backgroundColor: scheme.surface, color: scheme.text },
+												]}
+												value={props.repeat.every}
+												onCommit={props.onSetEvery}
+												maxLength={3}
+											/>
+											<View
+												style={[styles.periodToggle, { backgroundColor: scheme.toggleTrack }]}
+											>
+												{periodOptions.map((p) => {
+													const active = props.repeat.period === p;
+													return (
+														<Pressable
+															key={p}
+															onPress={() => props.onSetPeriod(p)}
+															style={[
+																styles.periodBtn,
+																active && styles.periodBtnActive,
+																active && { backgroundColor: scheme.cardBackground },
+															]}
+														>
+															<Text
+																style={[
+																	styles.periodText,
+																	{ color: scheme.textMuted },
+																	active && [
+																		styles.periodTextActive,
+																		{ color: scheme.text },
+																	],
+																]}
+															>
+																{periodLabel(p)}
+															</Text>
+														</Pressable>
+													);
+												})}
+											</View>
+										</View>
+
+										<View style={[styles.endModeToggle, { backgroundColor: scheme.toggleTrack }]}>
+											{endModeOptions.map((m) => {
+												const active = props.repeat.endMode === m;
 												return (
 													<Pressable
-														key={p}
-														onPress={() => props.onSetPeriod(p)}
-														style={[styles.periodBtn, active && styles.periodBtnActive, active && { backgroundColor: scheme.cardBackground }]}
+														key={m}
+														onPress={() => props.onSetEndMode(m)}
+														style={[
+															styles.endModeBtn,
+															active && styles.endModeBtnActive,
+															active && { backgroundColor: scheme.cardBackground },
+														]}
 													>
 														<Text
 															style={[
-																styles.periodText,
+																styles.endModeText,
 																{ color: scheme.textMuted },
-																active && [styles.periodTextActive, { color: scheme.text }],
+																active && [
+																	styles.endModeTextActive,
+																	{ color: scheme.text },
+																],
 															]}
 														>
-															{periodLabel(p)}
+															{m === "date" ? "Until date" : "After N times"}
 														</Text>
 													</Pressable>
 												);
 											})}
 										</View>
-									</View>
 
-									<View style={[styles.endModeToggle, { backgroundColor: scheme.toggleTrack }]}>
-										{endModeOptions.map((m) => {
-											const active = props.repeat.endMode === m;
-											return (
-												<Pressable
-													key={m}
-													onPress={() => props.onSetEndMode(m)}
-													style={[styles.endModeBtn, active && styles.endModeBtnActive, active && { backgroundColor: scheme.cardBackground }]}
-												>
-													<Text
-														style={[styles.endModeText, { color: scheme.textMuted }, active && [styles.endModeTextActive, { color: scheme.text }]]}
-													>
-														{m === "date" ? "Until date" : "After N times"}
-													</Text>
-												</Pressable>
-											);
-										})}
-									</View>
+										{props.repeat.endMode === "date" ? (
+											<View
+												style={[styles.wheelWrap, { backgroundColor: scheme.cardBackground }]}
+											>
+												<DateTimePicker
+													value={props.repeat.endDate}
+													mode="date"
+													display="spinner"
+													themeVariant="light"
+													textColor={scheme.text}
+													onChange={(_, d) => {
+														if (d) props.onSetEndDate(d);
+													}}
+												/>
+											</View>
+										) : (
+											<View style={[styles.row, { backgroundColor: scheme.surface }]}>
+												<Text style={[styles.rowLabel, { color: scheme.text }]}>
+													Number of occurrences
+												</Text>
+												<NumberField
+													style={[
+														styles.repeatNumberInput,
+														{ backgroundColor: scheme.surface, color: scheme.text },
+													]}
+													value={props.repeat.count}
+													onCommit={props.onSetCount}
+													maxLength={3}
+												/>
+											</View>
+										)}
 
-									{props.repeat.endMode === "date" ? (
-										<View style={[styles.wheelWrap, { backgroundColor: scheme.cardBackground }]}>
-											<DateTimePicker
-												value={props.repeat.endDate}
-												mode="date"
-												display="spinner"
-												themeVariant="light"
-												textColor={scheme.text}
-												onChange={(_, d) => {
-													if (d) props.onSetEndDate(d);
-												}}
-											/>
-										</View>
-									) : (
-										<View style={[styles.row, { backgroundColor: scheme.surface }]}>
-											<Text style={[styles.rowLabel, { color: scheme.text }]}>Number of occurrences</Text>
-											<NumberField
-												style={[styles.repeatNumberInput, { backgroundColor: scheme.surface, color: scheme.text }]}
-												value={props.repeat.count}
-												onCommit={props.onSetCount}
-												maxLength={3}
-											/>
-										</View>
-									)}
-
-									<Text style={[styles.repeatSummary, { color: scheme.textMuted }]}>{formatRepeatSummary(props.repeat)}</Text>
-								</>
-							)}
-						</View>
-					</Pressable>
-				</Animated.View>
-			</Pressable>
+										<Text style={[styles.repeatSummary, { color: scheme.textMuted }]}>
+											{formatRepeatSummary(props.repeat)}
+										</Text>
+									</>
+								)}
+							</View>
+						</Pressable>
+					</Animated.View>
+				</Pressable>
 			</KeyboardAvoidingView>
 		</Modal>
 	);
 }
-
 
 function NumberField({
 	value,

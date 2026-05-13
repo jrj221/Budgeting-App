@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   InputAccessoryView,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Switch,
   Text,
   TextInput,
@@ -18,7 +18,6 @@ import {
 
 import {
   buildTransactionSeries,
-  formatAmountDisplay,
   formatCentsDisplay,
   formatRepeatSummary,
   makeInitialRepeatConfig,
@@ -26,9 +25,9 @@ import {
   RepeatConfig,
   RepeatEndMode,
   RepeatPeriod,
-  sanitizeAmountDigits,
   Transaction,
 } from '@/components/add-transaction-card.presenter';
+import { AmountInput } from '@/components/amount-input';
 import { BudgetProgressBar } from '@/components/budget-progress-bar';
 import { goalCardStyles as styles } from '@/components/goal-card.styles';
 import { isColorSchemeDark, Palette, paleColor } from '@/constants/colors';
@@ -270,7 +269,6 @@ function ContributeSheet({ visible, goal, goalDeadline, onClose, onConfirm }: Co
   const isDark = isColorSchemeDark(scheme);
   const [digits, setDigits] = useState('');
   const [repeat, setRepeat] = useState<RepeatConfig>(() => makeInitialRepeatConfig());
-  const inputRef = useRef<TextInput>(null);
   const accessoryId = `${ACCESSORY_ID_BASE}-contribute-${goal.id}`;
 
   useEffect(() => {
@@ -284,7 +282,6 @@ function ContributeSheet({ visible, goal, goalDeadline, onClose, onConfirm }: Co
   const canSubmit = cents > 0;
 
   const dismiss = () => {
-    Keyboard.dismiss();
     onClose();
   };
 
@@ -333,40 +330,33 @@ function ContributeSheet({ visible, goal, goalDeadline, onClose, onConfirm }: Co
       transparent
       animationType="fade"
       onRequestClose={dismiss}>
-      <KeyboardAvoidingView
-        style={styles.amountInputModalRoot}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView
-          contentContainerStyle={{ alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <View style={[styles.amountInputCard, { backgroundColor: scheme.surface, width: '100%', maxWidth: 360 }]}>
-            <Text style={[styles.amountInputTitle, { color: scheme.text }]}>
-              Contribute to {goal.name}
-            </Text>
-            <Text style={[styles.amountInputBody, { color: scheme.textMuted }]}>
-              Logged as an expense in the &quot;{goal.name}&quot; category.
-            </Text>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: 'rgba(15,23,42,0.45)' }}
+        contentContainerStyle={{ minHeight: '100%', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 32 }}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        directionalLockEnabled>
+        {/* Backdrop — renders under the card, tap to dismiss */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} />
+        {/* Card — rendered after backdrop so it sits on top */}
+        <Pressable onPress={() => {}}>
+        <View style={[styles.amountInputCard, { backgroundColor: scheme.surface }]}>
+          <Text style={[styles.amountInputTitle, { color: scheme.text }]}>
+            Contribute to {goal.name}
+          </Text>
+          <Text style={[styles.amountInputBody, { color: scheme.textMuted }]}>
+            Logged as an expense in the &quot;{goal.name}&quot; category.
+          </Text>
 
-            <Pressable
-              style={[styles.amountInputWrap, { backgroundColor: scheme.toggleTrack }]}
-              onPress={() => inputRef.current?.focus()}>
-              <Text style={[styles.amountInputText, !digits && styles.amountInputMuted, { color: scheme.text }]}>
-                {formatAmountDisplay(digits)}
-              </Text>
-              <TextInput
-                ref={inputRef}
-                value={digits}
-                onChangeText={(v) => setDigits(sanitizeAmountDigits(v))}
-                keyboardType="number-pad"
-                keyboardAppearance={isDark ? 'dark' : 'light'}
-                style={styles.hiddenInput}
-                caretHidden
-                maxLength={9}
-                inputAccessoryViewID={accessoryId}
-                autoFocus
-              />
-            </Pressable>
+          <AmountInput
+            digits={digits}
+            onChangeDigits={setDigits}
+            accessoryViewId={accessoryId}
+            wrapStyle={[styles.amountInputWrap, { backgroundColor: scheme.toggleTrack }]}
+            textStyle={[styles.amountInputText, { color: scheme.text }]}
+            placeholderStyle={styles.amountInputMuted}
+          />
 
             {/* Repeat toggle */}
             <View style={[repeatStyles.toggleRow, { backgroundColor: scheme.toggleTrack, borderColor: scheme.border }]}>
@@ -470,20 +460,20 @@ function ContributeSheet({ visible, goal, goalDeadline, onClose, onConfirm }: Co
               </>
             )}
 
-            <View style={styles.buttonRow}>
-              <Pressable style={[styles.secondaryBtn, { backgroundColor: scheme.toggleTrack, borderColor: scheme.border }]} onPress={dismiss}>
-                <Text style={[styles.secondaryText, { color: scheme.text }]}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.primaryBtn, !canSubmit && styles.primaryDisabled]}
-                disabled={!canSubmit}
-                onPress={handleConfirm}>
-                <Text style={styles.primaryText}>Contribute</Text>
-              </Pressable>
-            </View>
+          <View style={styles.buttonRow}>
+            <Pressable style={[styles.secondaryBtn, { backgroundColor: scheme.toggleTrack, borderColor: scheme.border }]} onPress={dismiss}>
+              <Text style={[styles.secondaryText, { color: scheme.text }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.primaryBtn, !canSubmit && styles.primaryDisabled]}
+              disabled={!canSubmit}
+              onPress={handleConfirm}>
+              <Text style={styles.primaryText}>Contribute</Text>
+            </Pressable>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+        </Pressable>
+      </ScrollView>
 
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={accessoryId}>
@@ -590,16 +580,13 @@ function AmountInputModal({
   onConfirm,
 }: AmountInputModalProps) {
   const { scheme } = useAppTheme();
-  const isDark = isColorSchemeDark(scheme);
   const [digits, setDigits] = useState('');
-  const inputRef = useRef<TextInput>(null);
 
   const cents = parseInt(digits || '0', 10);
   const exceedsMax = typeof maxCents === 'number' && cents > maxCents;
   const canSubmit = cents > 0 && !exceedsMax;
 
   const dismiss = () => {
-    Keyboard.dismiss();
     setDigits('');
     onClose();
   };
@@ -631,53 +618,51 @@ function AmountInputModal({
       transparent
       animationType="fade"
       onRequestClose={dismiss}>
-      <KeyboardAvoidingView
-        style={styles.amountInputModalRoot}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[styles.amountInputCard, { backgroundColor: scheme.surface }]}>
-          <Text style={[styles.amountInputTitle, { color: scheme.text }]}>{title}</Text>
-          <Text style={[styles.amountInputBody, { color: scheme.textMuted }]}>{body}</Text>
-          <Pressable
-            style={[styles.amountInputWrap, { backgroundColor: scheme.toggleTrack }]}
-            onPress={() => inputRef.current?.focus()}>
-            <Text style={[styles.amountInputText, !digits && styles.amountInputMuted, { color: scheme.text }]}>
-              {formatAmountDisplay(digits)}
-            </Text>
-            <TextInput
-              ref={inputRef}
-              value={digits}
-              onChangeText={(v) => setDigits(sanitizeAmountDigits(v))}
-              keyboardType="number-pad"
-              keyboardAppearance={isDark ? 'dark' : 'light'}
-              style={styles.hiddenInput}
-              caretHidden
-              maxLength={9}
-              inputAccessoryViewID={accessoryId}
-              autoFocus
+      <ScrollView
+        style={{ flex: 1, backgroundColor: 'rgba(15,23,42,0.45)' }}
+        contentContainerStyle={{ minHeight: '100%', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 32 }}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        directionalLockEnabled>
+        {/* Backdrop — renders under the card, tap to dismiss */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} />
+        {/* Card — rendered after backdrop so it sits on top */}
+        <Pressable onPress={() => {}}>
+          <View style={[styles.amountInputCard, { backgroundColor: scheme.surface }]}>
+            <Text style={[styles.amountInputTitle, { color: scheme.text }]}>{title}</Text>
+            <Text style={[styles.amountInputBody, { color: scheme.textMuted }]}>{body}</Text>
+            <AmountInput
+              digits={digits}
+              onChangeDigits={setDigits}
+              accessoryViewId={accessoryId}
+              wrapStyle={[styles.amountInputWrap, { backgroundColor: scheme.toggleTrack }]}
+              textStyle={[styles.amountInputText, { color: scheme.text }]}
+              placeholderStyle={styles.amountInputMuted}
             />
-          </Pressable>
-          {exceedsMax && (
-            <Text style={{ fontSize: 12, color: Palette.spent, textAlign: 'center' }}>
-              Max available: {formatCentsDisplay(maxCents ?? 0)}
-            </Text>
-          )}
-          <View style={styles.buttonRow}>
-            <Pressable style={[styles.secondaryBtn, { backgroundColor: scheme.toggleTrack, borderColor: scheme.border }]} onPress={dismiss}>
-              <Text style={[styles.secondaryText, { color: scheme.text }]}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.primaryBtn,
-                !canSubmit && styles.primaryDisabled,
-                confirmDestructive && { backgroundColor: Palette.spent },
-              ]}
-              disabled={!canSubmit}
-              onPress={handleConfirm}>
-              <Text style={styles.primaryText}>{confirmLabel}</Text>
-            </Pressable>
+            {exceedsMax && (
+              <Text style={{ fontSize: 12, color: Palette.spent, textAlign: 'center' }}>
+                Max available: {formatCentsDisplay(maxCents ?? 0)}
+              </Text>
+            )}
+            <View style={styles.buttonRow}>
+              <Pressable style={[styles.secondaryBtn, { backgroundColor: scheme.toggleTrack, borderColor: scheme.border }]} onPress={dismiss}>
+                <Text style={[styles.secondaryText, { color: scheme.text }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.primaryBtn,
+                  !canSubmit && styles.primaryDisabled,
+                  confirmDestructive && { backgroundColor: Palette.spent },
+                ]}
+                disabled={!canSubmit}
+                onPress={handleConfirm}>
+                <Text style={styles.primaryText}>{confirmLabel}</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </Pressable>
+      </ScrollView>
 
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={accessoryId}>

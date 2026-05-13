@@ -121,6 +121,11 @@ export const goalCardStyles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     gap: 14,
+    shadowColor: Palette.shadow,
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 16,
+    elevation: 10,
   },
   amountInputTitle: {
     fontSize: 17,
