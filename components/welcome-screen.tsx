@@ -30,17 +30,17 @@ const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; body: str
 	{
 		icon: "add-circle-outline",
 		title: "Track what you spent or earned",
-		body: "Log a transaction in seconds — pick a category, set the date.",
+		body: "Log a transaction in seconds — enter an amount, pick a category, set the date.",
 	},
 	{
 		icon: "repeat-outline",
 		title: "Schedule recurring transactions",
-		body: "Rent, paychecks, subscriptions — set a cadence and forecast ahead.",
+		body: "Rent, paychecks, subscriptions — allow yourself to see the forecast ahead.",
 	},
 	{
 		icon: "trending-up-outline",
 		title: "See where your money is going",
-		body: "Pie chart by category and a projected balance line for the days ahead.",
+		body: "Charts to see your spending by category and a projected balance graph for the future.",
 	},
 ];
 

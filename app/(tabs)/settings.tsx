@@ -10,7 +10,11 @@ import { useGoals } from "@/contexts/goals-context";
 import { useOnboarding } from "@/contexts/onboarding-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { useTransactions } from "@/contexts/transactions-context";
-import { generateSampleGoalTransactions, generateSampleTransactions, SAMPLE_CATEGORY_BUDGETS } from "@/utils/sample-transactions";
+import {
+	generateSampleGoalTransactions,
+	generateSampleTransactions,
+	SAMPLE_CATEGORY_BUDGETS,
+} from "@/utils/sample-transactions";
 
 export default function SettingsScreen() {
 	const { scheme: current, schemes, setSchemeId } = useAppTheme();
@@ -25,11 +29,11 @@ export default function SettingsScreen() {
 			setCategoryBudget(b.categoryId, b.weeklyCents, b.monthlyOverrideCents);
 		}
 		const laptopGoal = addGoal({
-			name: 'New laptop',
-			color: '#22c55e',
-			icon: 'laptop',
+			name: "New laptop",
+			color: "#22c55e",
+			icon: "laptop",
 			targetCents: 120000,
-			mode: 'fromWeeks',
+			mode: "fromWeeks",
 			weeksTarget: 24,
 			weeklyContributionCents: 5000,
 		});
@@ -38,11 +42,11 @@ export default function SettingsScreen() {
 			addTransactions(generateSampleGoalTransactions(laptopGoal.categoryId, laptopGoal.name));
 		}
 		const travelGoal = addGoal({
-			name: 'Travel fund',
-			color: '#f59e0b',
-			icon: 'plane',
+			name: "Travel fund",
+			color: "#f59e0b",
+			icon: "plane",
 			targetCents: 200000,
-			mode: 'fromWeekly',
+			mode: "fromWeekly",
 			weeksTarget: 40,
 			weeklyContributionCents: 5000,
 		});
@@ -115,13 +119,12 @@ export default function SettingsScreen() {
 					<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
 						<Text style={[styles.sectionTitle, { color: current.text }]}>Test data</Text>
 						<Text style={[styles.sectionSubtitle, { color: current.textMuted }]}>
-							Drop in a varied set of past + future transactions so you don&apos;t have to retype them every
-							reload.
+							Drop in a varied set of past + future transactions so you don&apos;t have to retype them
+							every reload.
 						</Text>
 						<Pressable onPress={onLoadSample} style={styles.actionRow}>
 							<Ionicons name="sparkles-outline" size={20} color={Palette.brand} />
-							<Text style={[styles.actionText, { color: current.text }]}>Load sample transactions</Text>
-							<Text style={[styles.actionMeta, { color: current.textMuted }]}>+35 entries</Text>
+							<Text style={[styles.actionText, { color: current.text }]}>Load sample data</Text>
 						</Pressable>
 						<Pressable
 							onPress={onClearAll}
@@ -130,7 +133,9 @@ export default function SettingsScreen() {
 						>
 							<Ionicons name="trash-outline" size={20} color={Palette.spent} />
 							<Text style={[styles.actionText, { color: Palette.spent }]}>Clear all transactions</Text>
-							<Text style={[styles.actionMeta, { color: current.textMuted }]}>{transactions.length} stored</Text>
+							<Text style={[styles.actionMeta, { color: current.textMuted }]}>
+								{transactions.length} stored
+							</Text>
 						</Pressable>
 					</View>
 				)}

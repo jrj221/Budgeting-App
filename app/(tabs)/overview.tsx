@@ -96,11 +96,21 @@ export default function OverviewScreen() {
 				<View style={[styles.balanceCard, { backgroundColor: scheme.cardBackground }]}>
 					<View style={styles.balanceHeaderRow}>
 						<Text style={[styles.balanceLabel, { color: scheme.textMuted }]}>Current balance</Text>
-						<Pressable onPress={showBalanceInfo} hitSlop={8} style={[styles.infoBtn, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+						<Pressable
+							onPress={showBalanceInfo}
+							hitSlop={8}
+							style={[styles.infoBtn, { backgroundColor: scheme.surface, borderColor: scheme.border }]}
+						>
 							<Ionicons name="information" size={13} color={scheme.textMuted} />
 						</Pressable>
 					</View>
-					<Text style={[styles.balanceAmount, { color: scheme.text }, balanceCents < 0 && styles.balanceAmountNeg]}>
+					<Text
+						style={[
+							styles.balanceAmount,
+							{ color: scheme.text },
+							balanceCents < 0 && styles.balanceAmountNeg,
+						]}
+					>
 						{balanceCents < 0
 							? `-${formatCentsDisplay(Math.abs(balanceCents))}`
 							: formatCentsDisplay(balanceCents)}
@@ -114,7 +124,9 @@ export default function OverviewScreen() {
 
 				<View style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}>
 					<Text style={[chartStyles.title, { color: scheme.text }]}>Projected balance</Text>
-					<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>Running total of future earnings and expenses.</Text>
+					<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>
+						Running total of future earnings and expenses.
+					</Text>
 					{lineData.points.length > 1 ? (
 						<LineChart
 							data={lineData.points}
@@ -132,7 +144,9 @@ export default function OverviewScreen() {
 					) : (
 						<View style={chartStyles.empty}>
 							<Ionicons name="trending-up-outline" size={28} color={scheme.textMuted} />
-							<Text style={[chartStyles.emptyText, { color: scheme.textMuted }]}>Schedule future transactions to see a projection.</Text>
+							<Text style={[chartStyles.emptyText, { color: scheme.textMuted }]}>
+								Schedule future transactions to see a projection.
+							</Text>
 						</View>
 					)}
 				</View>
@@ -141,10 +155,20 @@ export default function OverviewScreen() {
 					<View style={chartStyles.headerRow}>
 						<View style={chartStyles.headerLeft}>
 							<Text style={[chartStyles.title, { color: scheme.text }]}>Spending by category</Text>
-							<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>Past expenses, grouped.</Text>
+							<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>
+								Past expenses, grouped.
+							</Text>
 						</View>
-						<Pressable onPress={() => setFilterOpen(true)} style={[chartStyles.filterButton, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
-							<Text style={[chartStyles.filterText, { color: scheme.textMuted }]}>{filterLabel(pieFilter)}</Text>
+						<Pressable
+							onPress={() => setFilterOpen(true)}
+							style={[
+								chartStyles.filterButton,
+								{ backgroundColor: scheme.surface, borderColor: scheme.border },
+							]}
+						>
+							<Text style={[chartStyles.filterText, { color: scheme.textMuted }]}>
+								{filterLabel(pieFilter)}
+							</Text>
 							<Ionicons name="chevron-down" size={14} color={scheme.textMuted} />
 						</Pressable>
 					</View>
@@ -162,16 +186,22 @@ export default function OverviewScreen() {
 									labelMutedColor={scheme.textMuted}
 								/>
 								<Text style={[styles.totalLabel, { color: scheme.textMuted }]}>Total</Text>
-								<Text style={[styles.totalAmount, { color: scheme.text }]}>{formatCentsDisplay(totalSpent)}</Text>
+								<Text style={[styles.totalAmount, { color: scheme.text }]}>
+									{formatCentsDisplay(totalSpent)}
+								</Text>
 							</View>
 							<View style={chartStyles.legend}>
 								{pieData.map((slice) => (
 									<View key={slice.key} style={chartStyles.legendRow}>
 										<View style={chartStyles.legendLeft}>
 											<View style={[chartStyles.legendDot, { backgroundColor: slice.color }]} />
-											<Text style={[chartStyles.legendName, { color: scheme.text }]}>{slice.label}</Text>
+											<Text style={[chartStyles.legendName, { color: scheme.text }]}>
+												{slice.label}
+											</Text>
 										</View>
-										<Text style={[chartStyles.legendValue, { color: scheme.text }]}>{formatCentsDisplay(slice.value)}</Text>
+										<Text style={[chartStyles.legendValue, { color: scheme.text }]}>
+											{formatCentsDisplay(slice.value)}
+										</Text>
 										<Text style={[chartStyles.legendPercent, { color: scheme.textMuted }]}>
 											{((slice.value / totalSpent) * 100).toFixed(0)}%
 										</Text>
@@ -182,7 +212,9 @@ export default function OverviewScreen() {
 					) : (
 						<View style={chartStyles.empty}>
 							<Ionicons name="pie-chart-outline" size={28} color={scheme.textMuted} />
-							<Text style={[chartStyles.emptyText, { color: scheme.textMuted }]}>No expenses {filterEmptyHint(pieFilter)}.</Text>
+							<Text style={[chartStyles.emptyText, { color: scheme.textMuted }]}>
+								No expenses {filterEmptyHint(pieFilter)}.
+							</Text>
 						</View>
 					)}
 				</View>
@@ -218,7 +250,10 @@ function FilterMenu({ visible, options, current, onSelect, onClose }: FilterMenu
 	return (
 		<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
 			<Pressable style={chartStyles.menuOverlay} onPress={onClose}>
-				<Pressable style={[chartStyles.menuCard, { backgroundColor: scheme.cardBackground }]} onPress={() => {}}>
+				<Pressable
+					style={[chartStyles.menuCard, { backgroundColor: scheme.cardBackground }]}
+					onPress={() => {}}
+				>
 					<ScrollView style={chartStyles.menuScroll}>
 						{options.map((opt) => {
 							const active = opt.id === currentId;
@@ -391,7 +426,12 @@ function listSpentMonths(transactions: Transaction[]): { year: number; month: nu
 
 type PieEntry = PieSlice;
 
-function buildCategoryDistribution(transactions: Transaction[], categories: Category[], filter: PieFilter, getRetiredMeta: (id: string | null | undefined) => { name: string; color: string } | null): PieEntry[] {
+function buildCategoryDistribution(
+	transactions: Transaction[],
+	categories: Category[],
+	filter: PieFilter,
+	getRetiredMeta: (id: string | null | undefined) => { name: string; color: string } | null,
+): PieEntry[] {
 	const today = startOfDay(new Date());
 	const todayEnd = new Date(today);
 	todayEnd.setHours(23, 59, 59, 999);
@@ -417,7 +457,12 @@ function buildCategoryDistribution(transactions: Transaction[], categories: Cate
 			const cat = categories.find((c) => c.id === key);
 			if (!cat) {
 				const retired = getRetiredMeta(key);
-				entries.push({ key, value, color: retired?.color ?? Palette.uncategorized, label: retired?.name ?? "Removed category" });
+				entries.push({
+					key,
+					value,
+					color: retired?.color ?? Palette.uncategorized,
+					label: retired?.name ?? "Removed category",
+				});
 			} else {
 				entries.push({ key, value, color: cat.color, label: cat.name });
 			}
