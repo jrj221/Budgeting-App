@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { styles } from "@/app/(tabs)/settings.styles";
 import { Palette } from "@/constants/colors";
 import { DEV_MODE } from "@/constants/dev";
 import { useCategories } from "@/contexts/categories-context";
@@ -10,6 +9,7 @@ import { useGoals } from "@/contexts/goals-context";
 import { useOnboarding } from "@/contexts/onboarding-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { useTransactions } from "@/contexts/transactions-context";
+import { styles } from "@/styles/settings.styles";
 import {
 	generateSampleGoalTransactions,
 	generateSampleTransactions,

@@ -3,13 +3,13 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { styles } from "@/app/(tabs)/goals.styles";
 import { GoalCard } from "@/components/goal-card";
 import { GoalEditorSheet } from "@/components/goal-editor-sheet";
 import { Palette } from "@/constants/colors";
 import { useCategories } from "@/contexts/categories-context";
 import { useGoals } from "@/contexts/goals-context";
 import { useAppTheme } from "@/contexts/theme-context";
+import { styles } from "@/styles/goals.styles";
 
 export default function GoalsScreen() {
 	const { scheme } = useAppTheme();

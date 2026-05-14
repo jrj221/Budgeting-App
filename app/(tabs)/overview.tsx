@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { styles } from "@/app/(tabs)/overview.styles";
 import { Category, formatCentsDisplay, Transaction } from "@/components/add-transaction-card.presenter";
 import { BudgetCard } from "@/components/budget-card";
 import { BudgetEditorSheet } from "@/components/budget-editor-sheet";
@@ -16,6 +15,7 @@ import { useGoals } from "@/contexts/goals-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { TOUR_STEPS, useTour } from "@/contexts/tour-context";
 import { useTransactions } from "@/contexts/transactions-context";
+import { styles } from "@/styles/overview.styles";
 
 const UNCATEGORIZED_KEY = "__uncategorized__";
 

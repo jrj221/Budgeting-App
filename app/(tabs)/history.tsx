@@ -1,284 +1,287 @@
-import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { styles } from '@/app/(tabs)/history.styles';
-import {
-  formatCentsDisplay,
-  Transaction,
-} from '@/components/add-transaction-card.presenter';
-import { EditTransactionSheet } from '@/components/edit-transaction-sheet';
-import { useCategories } from '@/contexts/categories-context';
-import { useGoals } from '@/contexts/goals-context';
-import { useAppTheme } from '@/contexts/theme-context';
-import { useTransactions } from '@/contexts/transactions-context';
-import { Palette } from '@/constants/colors';
+import { formatCentsDisplay, Transaction } from "@/components/add-transaction-card.presenter";
+import { EditTransactionSheet } from "@/components/edit-transaction-sheet";
+import { Palette } from "@/constants/colors";
+import { useCategories } from "@/contexts/categories-context";
+import { useGoals } from "@/contexts/goals-context";
+import { useAppTheme } from "@/contexts/theme-context";
+import { useTransactions } from "@/contexts/transactions-context";
+import { styles } from "@/styles/history.styles";
 
-type TabKey = 'upcoming' | 'completed';
+type TabKey = "upcoming" | "completed";
 
 const TAB_LABELS: Record<TabKey, string> = {
-  upcoming: 'Upcoming',
-  completed: 'Completed',
+	upcoming: "Upcoming",
+	completed: "Completed",
 };
 
 export default function HistoryScreen() {
-  const { transactions } = useTransactions();
-  const { scheme } = useAppTheme();
-  const [tab, setTab] = useState<TabKey>('upcoming');
-  const [editingId, setEditingId] = useState<string | null>(null);
+	const { transactions } = useTransactions();
+	const { scheme } = useAppTheme();
+	const [tab, setTab] = useState<TabKey>("upcoming");
+	const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { upcoming, completed } = useMemo(() => splitByDate(transactions), [transactions]);
-  const visible = tab === 'upcoming' ? upcoming : completed;
-  const editing = editingId ? transactions.find((t) => t.id === editingId) ?? null : null;
+	const { upcoming, completed } = useMemo(() => splitByDate(transactions), [transactions]);
+	const visible = tab === "upcoming" ? upcoming : completed;
+	const editing = editingId ? (transactions.find((t) => t.id === editingId) ?? null) : null;
 
-  return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: scheme.background }]} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: scheme.text }]}>History</Text>
-          <Text style={[styles.subtitle, { color: scheme.textMuted }]}>
-            Past activity and what's planned next.
-          </Text>
-        </View>
+	return (
+		<SafeAreaView style={[styles.safe, { backgroundColor: scheme.background }]} edges={["top"]}>
+			<ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+				<View style={styles.header}>
+					<Text style={[styles.title, { color: scheme.text }]}>History</Text>
+					<Text style={[styles.subtitle, { color: scheme.textMuted }]}>
+						Past activity and what's planned next.
+					</Text>
+				</View>
 
-        <View style={[styles.tabBar, { backgroundColor: scheme.toggleTrack }]}>
-          {(Object.keys(TAB_LABELS) as TabKey[]).map((key) => {
-            const active = tab === key;
-            const count = key === 'upcoming' ? upcoming.length : completed.length;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => setTab(key)}
-                style={[styles.tabBtn, active && [styles.tabBtnActive, { backgroundColor: scheme.cardBackground }]]}>
-                <Text style={[styles.tabText, { color: scheme.textMuted }, active && [styles.tabTextActive, { color: scheme.text }]]}>
-                  {TAB_LABELS[key]} {count > 0 ? `(${count})` : ''}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+				<View style={[styles.tabBar, { backgroundColor: scheme.toggleTrack }]}>
+					{(Object.keys(TAB_LABELS) as TabKey[]).map((key) => {
+						const active = tab === key;
+						const count = key === "upcoming" ? upcoming.length : completed.length;
+						return (
+							<Pressable
+								key={key}
+								onPress={() => setTab(key)}
+								style={[
+									styles.tabBtn,
+									active && [styles.tabBtnActive, { backgroundColor: scheme.cardBackground }],
+								]}
+							>
+								<Text
+									style={[
+										styles.tabText,
+										{ color: scheme.textMuted },
+										active && [styles.tabTextActive, { color: scheme.text }],
+									]}
+								>
+									{TAB_LABELS[key]} {count > 0 ? `(${count})` : ""}
+								</Text>
+							</Pressable>
+						);
+					})}
+				</View>
 
-        {visible.length === 0 ? (
-          <EmptyState tab={tab} />
-        ) : (
-          <TransactionGroupedList
-            transactions={visible}
-            reverse={tab === 'completed'}
-            onSelect={setEditingId}
-          />
-        )}
-      </ScrollView>
+				{visible.length === 0 ? (
+					<EmptyState tab={tab} />
+				) : (
+					<TransactionGroupedList
+						transactions={visible}
+						reverse={tab === "completed"}
+						onSelect={setEditingId}
+					/>
+				)}
+			</ScrollView>
 
-      <EditTransactionSheet
-        visible={editing !== null}
-        transaction={editing}
-        onClose={() => setEditingId(null)}
-      />
-    </SafeAreaView>
-  );
+			<EditTransactionSheet visible={editing !== null} transaction={editing} onClose={() => setEditingId(null)} />
+		</SafeAreaView>
+	);
 }
 
 function EmptyState({ tab }: { tab: TabKey }) {
-  const { scheme } = useAppTheme();
-  return (
-    <View style={[styles.list, styles.empty, { backgroundColor: scheme.cardBackground }]}>
-      <Ionicons
-        name={tab === 'upcoming' ? 'calendar-outline' : 'time-outline'}
-        size={28}
-        color={scheme.textMuted}
-      />
-      <Text style={[styles.emptyTitle, { color: scheme.text }]}>
-        {tab === 'upcoming' ? 'No upcoming transactions' : 'No completed transactions'}
-      </Text>
-      <Text style={[styles.emptySubtitle, { color: scheme.textMuted }]}>
-        {tab === 'upcoming'
-          ? 'Schedule a recurring transaction to see future entries here.'
-          : 'Add your first transaction to start building history.'}
-      </Text>
-    </View>
-  );
+	const { scheme } = useAppTheme();
+	return (
+		<View style={[styles.list, styles.empty, { backgroundColor: scheme.cardBackground }]}>
+			<Ionicons
+				name={tab === "upcoming" ? "calendar-outline" : "time-outline"}
+				size={28}
+				color={scheme.textMuted}
+			/>
+			<Text style={[styles.emptyTitle, { color: scheme.text }]}>
+				{tab === "upcoming" ? "No upcoming transactions" : "No completed transactions"}
+			</Text>
+			<Text style={[styles.emptySubtitle, { color: scheme.textMuted }]}>
+				{tab === "upcoming"
+					? "Schedule a recurring transaction to see future entries here."
+					: "Add your first transaction to start building history."}
+			</Text>
+		</View>
+	);
 }
 
 function TransactionGroupedList({
-  transactions,
-  reverse,
-  onSelect,
+	transactions,
+	reverse,
+	onSelect,
 }: {
-  transactions: Transaction[];
-  reverse: boolean;
-  onSelect: (id: string) => void;
+	transactions: Transaction[];
+	reverse: boolean;
+	onSelect: (id: string) => void;
 }) {
-  const groups = useMemo(() => groupByDay(transactions, reverse), [transactions, reverse]);
-  const { scheme } = useAppTheme();
+	const groups = useMemo(() => groupByDay(transactions, reverse), [transactions, reverse]);
+	const { scheme } = useAppTheme();
 
-  return (
-    <View style={{ gap: 16 }}>
-      {groups.map((group) => (
-        <View key={group.key}>
-          <Text style={[styles.groupHeader, { color: scheme.textMuted }]}>{group.label}</Text>
-          <View style={[styles.list, { backgroundColor: scheme.cardBackground }]}>
-            {group.items.map((tx, index) => (
-              <TransactionRow
-                key={tx.id}
-                tx={tx}
-                isLast={index === group.items.length - 1}
-                onPress={() => onSelect(tx.id)}
-              />
-            ))}
-          </View>
-        </View>
-      ))}
-    </View>
-  );
+	return (
+		<View style={{ gap: 16 }}>
+			{groups.map((group) => (
+				<View key={group.key}>
+					<Text style={[styles.groupHeader, { color: scheme.textMuted }]}>{group.label}</Text>
+					<View style={[styles.list, { backgroundColor: scheme.cardBackground }]}>
+						{group.items.map((tx, index) => (
+							<TransactionRow
+								key={tx.id}
+								tx={tx}
+								isLast={index === group.items.length - 1}
+								onPress={() => onSelect(tx.id)}
+							/>
+						))}
+					</View>
+				</View>
+			))}
+		</View>
+	);
 }
 
-function TransactionRow({
-  tx,
-  isLast,
-  onPress,
-}: {
-  tx: Transaction;
-  isLast: boolean;
-  onPress: () => void;
-}) {
-  const { getCategory } = useCategories();
-  const { isRetiredGoalCategory, getRetiredGoalCategoryMeta } = useGoals();
-  const { scheme } = useAppTheme();
-  const category = getCategory(tx.categoryId);
-  const retiredMeta = getRetiredGoalCategoryMeta(tx.categoryId);
-  const categoryName = category?.name ?? retiredMeta?.name ?? null;
-  const sign = tx.mode === 'spent' ? '-' : '+';
-  const isRetired = isRetiredGoalCategory(tx.categoryId);
-  const isGoalReturn = !tx.categoryId && tx.mode === 'earned' && tx.title.startsWith('Returned from ');
-  const isGoalTx = !!category?.isGoal || isRetired;
-  const goalColor = category?.color ?? retiredMeta?.color;
-  const isLocked = isRetired || isGoalReturn;
-  const showGoalBadge = (isGoalTx && !!goalColor) || isGoalReturn;
-  const badgeColor = goalColor ?? Palette.uncategorized;
-  const badgeLabel = isGoalReturn ? 'Goal deleted' : tx.mode === 'spent' ? 'Contribution' : 'Withdrawal';
+function TransactionRow({ tx, isLast, onPress }: { tx: Transaction; isLast: boolean; onPress: () => void }) {
+	const { getCategory } = useCategories();
+	const { isRetiredGoalCategory, getRetiredGoalCategoryMeta } = useGoals();
+	const { scheme } = useAppTheme();
+	const category = getCategory(tx.categoryId);
+	const retiredMeta = getRetiredGoalCategoryMeta(tx.categoryId);
+	const categoryName = category?.name ?? retiredMeta?.name ?? null;
+	const sign = tx.mode === "spent" ? "-" : "+";
+	const isRetired = isRetiredGoalCategory(tx.categoryId);
+	const isGoalReturn = !tx.categoryId && tx.mode === "earned" && tx.title.startsWith("Returned from ");
+	const isGoalTx = !!category?.isGoal || isRetired;
+	const goalColor = category?.color ?? retiredMeta?.color;
+	const isLocked = isRetired || isGoalReturn;
+	const showGoalBadge = (isGoalTx && !!goalColor) || isGoalReturn;
+	const badgeColor = goalColor ?? Palette.uncategorized;
+	const badgeLabel = isGoalReturn ? "Goal deleted" : tx.mode === "spent" ? "Contribution" : "Withdrawal";
 
-  return (
-    <Pressable
-      onPress={isLocked ? undefined : onPress}
-      style={[
-        styles.row,
-        isLast && styles.rowLast,
-        showGoalBadge ? { borderLeftWidth: 4, borderLeftColor: badgeColor, paddingLeft: 12 } : null,
-        isLocked && { opacity: 0.45 },
-      ]}>
-      <View style={styles.rowMain}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {showGoalBadge && (
-            <Ionicons name="flag" size={14} color={badgeColor} />
-          )}
-          <Text style={[styles.rowTitle, { color: scheme.text }]}>{tx.title}</Text>
-        </View>
-        <View style={styles.seriesBadge}>
-          {showGoalBadge && (
-            <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: badgeColor }}>
-                <Ionicons name={tx.mode === 'spent' ? 'arrow-up' : 'arrow-down'} size={9} color="#fff" />
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
-                  {badgeLabel}
-                </Text>
-              </View>
-              {(categoryName || tx.seriesId) && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
-            </>
-          )}
-          {category ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
-              <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
-            </View>
-          ) : retiredMeta ? (
-            <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{retiredMeta.name}</Text>
-          ) : null}
-          {tx.seriesId && (
-            <>
-              {categoryName && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
-              <Ionicons name="repeat" size={12} color={scheme.textMuted} />
-              <Text style={[styles.seriesBadgeText, { color: scheme.textMuted }]}>Recurring</Text>
-            </>
-          )}
-        </View>
-      </View>
-      <Text
-        style={[
-          styles.rowAmount,
-          tx.mode === 'spent' ? styles.amountSpent : styles.amountEarned,
-        ]}>
-        {sign}
-        {formatCentsDisplay(tx.amountCents)}
-      </Text>
-      <Ionicons name={isLocked ? 'lock-closed-outline' : 'chevron-forward'} size={16} color={scheme.textMuted} />
-    </Pressable>
-  );
+	return (
+		<Pressable
+			onPress={isLocked ? undefined : onPress}
+			style={[
+				styles.row,
+				isLast && styles.rowLast,
+				showGoalBadge ? { borderLeftWidth: 4, borderLeftColor: badgeColor, paddingLeft: 12 } : null,
+				isLocked && { opacity: 0.45 },
+			]}
+		>
+			<View style={styles.rowMain}>
+				<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+					{showGoalBadge && <Ionicons name="flag" size={14} color={badgeColor} />}
+					<Text style={[styles.rowTitle, { color: scheme.text }]}>{tx.title}</Text>
+				</View>
+				<View style={styles.seriesBadge}>
+					{showGoalBadge && (
+						<>
+							<View
+								style={{
+									flexDirection: "row",
+									alignItems: "center",
+									gap: 3,
+									paddingHorizontal: 6,
+									paddingVertical: 2,
+									borderRadius: 999,
+									backgroundColor: badgeColor,
+								}}
+							>
+								<Ionicons
+									name={tx.mode === "spent" ? "arrow-up" : "arrow-down"}
+									size={9}
+									color="#fff"
+								/>
+								<Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>{badgeLabel}</Text>
+							</View>
+							{(categoryName || tx.seriesId) && (
+								<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>
+							)}
+						</>
+					)}
+					{category ? (
+						<View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+							<FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
+							<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
+						</View>
+					) : retiredMeta ? (
+						<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{retiredMeta.name}</Text>
+					) : null}
+					{tx.seriesId && (
+						<>
+							{categoryName && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
+							<Ionicons name="repeat" size={12} color={scheme.textMuted} />
+							<Text style={[styles.seriesBadgeText, { color: scheme.textMuted }]}>Recurring</Text>
+						</>
+					)}
+				</View>
+			</View>
+			<Text style={[styles.rowAmount, tx.mode === "spent" ? styles.amountSpent : styles.amountEarned]}>
+				{sign}
+				{formatCentsDisplay(tx.amountCents)}
+			</Text>
+			<Ionicons name={isLocked ? "lock-closed-outline" : "chevron-forward"} size={16} color={scheme.textMuted} />
+		</Pressable>
+	);
 }
 
 function startOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+	const d = new Date(date);
+	d.setHours(0, 0, 0, 0);
+	return d;
 }
 
 function splitByDate(transactions: Transaction[]) {
-  const today = startOfDay(new Date()).getTime();
-  const upcoming: Transaction[] = [];
-  const completed: Transaction[] = [];
-  for (const tx of transactions) {
-    const day = startOfDay(new Date(tx.date)).getTime();
-    if (day > today) upcoming.push(tx);
-    else completed.push(tx);
-  }
-  return { upcoming, completed };
+	const today = startOfDay(new Date()).getTime();
+	const upcoming: Transaction[] = [];
+	const completed: Transaction[] = [];
+	for (const tx of transactions) {
+		const day = startOfDay(new Date(tx.date)).getTime();
+		if (day > today) upcoming.push(tx);
+		else completed.push(tx);
+	}
+	return { upcoming, completed };
 }
 
 type DayGroup = { key: string; label: string; items: Transaction[] };
 
 function groupByDay(transactions: Transaction[], reverse: boolean): DayGroup[] {
-  const map = new Map<string, Transaction[]>();
-  for (const tx of transactions) {
-    const d = startOfDay(new Date(tx.date));
-    const key = d.toISOString().slice(0, 10);
-    const list = map.get(key);
-    if (list) list.push(tx);
-    else map.set(key, [tx]);
-  }
+	const map = new Map<string, Transaction[]>();
+	for (const tx of transactions) {
+		const d = startOfDay(new Date(tx.date));
+		const key = d.toISOString().slice(0, 10);
+		const list = map.get(key);
+		if (list) list.push(tx);
+		else map.set(key, [tx]);
+	}
 
-  const today = startOfDay(new Date());
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+	const today = startOfDay(new Date());
+	const yesterday = new Date(today);
+	yesterday.setDate(yesterday.getDate() - 1);
+	const tomorrow = new Date(today);
+	tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const sortedKeys = Array.from(map.keys()).sort();
-  const ordered = reverse ? sortedKeys.reverse() : sortedKeys;
+	const sortedKeys = Array.from(map.keys()).sort();
+	const ordered = reverse ? sortedKeys.reverse() : sortedKeys;
 
-  return ordered.map((key) => {
-    const date = new Date(`${key}T00:00:00`);
-    return {
-      key,
-      label: dayLabel(date, today, yesterday, tomorrow),
-      items: map.get(key)!.slice().sort((a, b) => (a.date < b.date ? -1 : 1)),
-    };
-  });
+	return ordered.map((key) => {
+		const date = new Date(`${key}T00:00:00`);
+		return {
+			key,
+			label: dayLabel(date, today, yesterday, tomorrow),
+			items: map
+				.get(key)!
+				.slice()
+				.sort((a, b) => (a.date < b.date ? -1 : 1)),
+		};
+	});
 }
 
 function dayLabel(date: Date, today: Date, yesterday: Date, tomorrow: Date): string {
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-  if (sameDay(date, today)) return 'Today';
-  if (sameDay(date, yesterday)) return 'Yesterday';
-  if (sameDay(date, tomorrow)) return 'Tomorrow';
-  return date.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() === today.getFullYear() ? undefined : 'numeric',
-  });
+	const sameDay = (a: Date, b: Date) =>
+		a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+	if (sameDay(date, today)) return "Today";
+	if (sameDay(date, yesterday)) return "Yesterday";
+	if (sameDay(date, tomorrow)) return "Tomorrow";
+	return date.toLocaleDateString(undefined, {
+		weekday: "short",
+		month: "short",
+		day: "numeric",
+		year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+	});
 }
