@@ -332,17 +332,19 @@ export function EditTransactionSheet({
               </View>
             </Pressable>
             {isDatePickerOpen && (
-              <View style={[styles.wheelWrap, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="spinner"
-                  themeVariant={isDark ? 'dark' : 'light'}
-                  textColor={scheme.text}
-                  onChange={(_, d) => {
-                    if (d) setDate(d);
-                  }}
-                />
+              <View style={[styles.wheelWrap, styles.calendarWrap, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+                <View style={styles.calendarScale}>
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="inline"
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    accentColor={scheme.lineChart}
+                    onChange={(_, d) => {
+                      if (d) setDate(d);
+                    }}
+                  />
+                </View>
               </View>
             )}
 

@@ -152,6 +152,15 @@ export const editStyles = StyleSheet.create({
     borderColor: Palette.border,
     overflow: 'hidden',
   },
+  calendarWrap: {
+    height: 280,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  calendarScale: {
+    transform: [{ scale: 0.87 }],
+    marginTop: -22,
+  },
   catGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -104,17 +104,19 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				</View>
 			</Pressable>
 			{presenter.isDatePickerOpen && (
-				<View style={[styles.wheelWrap, { backgroundColor: scheme.cardBackground }]}>
-					<DateTimePicker
-						value={presenter.draft.date}
-						mode="date"
-						display="spinner"
-						themeVariant={isDark ? "dark" : "light"}
-						textColor={scheme.text}
-						onChange={(_, d) => {
-							if (d) presenter.setDate(d);
-						}}
-					/>
+				<View style={[styles.wheelWrap, styles.calendarWrap, { backgroundColor: scheme.cardBackground }]}>
+					<View style={styles.calendarScale}>
+						<DateTimePicker
+							value={presenter.draft.date}
+							mode="date"
+							display="inline"
+							themeVariant={isDark ? "dark" : "light"}
+							accentColor={scheme.lineChart}
+							onChange={(_, d) => {
+								if (d) presenter.setDate(d);
+							}}
+						/>
+					</View>
 				</View>
 			)}
 
@@ -603,6 +605,7 @@ type RepeatSheetProps = {
 
 function RepeatSheet(props: RepeatSheetProps) {
 	const { scheme } = useAppTheme();
+	const isDark = isColorSchemeDark(scheme);
 	const sheet = useSheetGesture(props.visible, props.onClose);
 	const periodOptions: RepeatPeriod[] = ["weeks", "months"];
 	const endModeOptions: RepeatEndMode[] = ["date", "count"];
@@ -727,18 +730,20 @@ function RepeatSheet(props: RepeatSheetProps) {
 
 										{props.repeat.endMode === "date" ? (
 											<View
-												style={[styles.wheelWrap, { backgroundColor: scheme.cardBackground }]}
+												style={[styles.wheelWrap, styles.calendarWrap, { backgroundColor: scheme.cardBackground }]}
 											>
-												<DateTimePicker
-													value={props.repeat.endDate}
-													mode="date"
-													display="spinner"
-													themeVariant="light"
-													textColor={scheme.text}
-													onChange={(_, d) => {
-														if (d) props.onSetEndDate(d);
-													}}
-												/>
+												<View style={styles.calendarScale}>
+													<DateTimePicker
+														value={props.repeat.endDate}
+														mode="date"
+														display="inline"
+														themeVariant={isDark ? "dark" : "light"}
+														accentColor={scheme.lineChart}
+														onChange={(_, d) => {
+															if (d) props.onSetEndDate(d);
+														}}
+													/>
+												</View>
 											</View>
 										) : (
 											<View style={[styles.row, { backgroundColor: scheme.surface }]}>
