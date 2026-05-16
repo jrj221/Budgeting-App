@@ -270,8 +270,8 @@ function CategorySheet(props: CategorySheetProps) {
 
 	return (
 		<Modal visible={props.visible} animationType="slide" transparent onRequestClose={props.onClose}>
-			<KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-				<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
+			<Pressable style={styles.sheetBackdrop} onPress={props.onClose}>
+				<KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
 					<Animated.View
 						style={[
 							styles.sheet,
@@ -401,8 +401,8 @@ function CategorySheet(props: CategorySheetProps) {
 							)}
 						</Pressable>
 					</Animated.View>
-				</Pressable>
-			</KeyboardAvoidingView>
+				</KeyboardAvoidingView>
+			</Pressable>
 		</Modal>
 	);
 }
