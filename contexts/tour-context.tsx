@@ -88,7 +88,7 @@ type Snapshot = {
 type TourContextValue = {
 	stepIndex: number | null;
 	totalSteps: number;
-	startTour: () => void;
+	startTour: (preExistingTransactions?: Transaction[]) => void;
 	advance: () => void;
 	skip: () => void;
 };
@@ -112,9 +112,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
 		snapshotRef.current = null;
 	}, [replaceAllTransactions, replaceAllCategories, replaceAllGoals]);
 
-	const startTour = useCallback(() => {
+	const startTour = useCallback((preExistingTransactions: Transaction[] = []) => {
 		snapshotRef.current = {
-			transactions: [...transactions],
+			// Include any transactions that were just added (e.g. starting balance) but whose
+			// React state update hasn't been processed yet when startTour is called synchronously.
+			transactions: [...transactions, ...preExistingTransactions],
 			categories: categories.map((c) => ({ ...c })),
 			goals: goals.map((g) => ({ ...g })),
 		};

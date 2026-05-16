@@ -64,11 +64,12 @@ export function WelcomeScreen() {
 
 	const submit = async (withTour: boolean) => {
 		const cents = parseInt(amountDigits || "0", 10);
+		let startingTx: Transaction | null = null;
 		if (cents > 0) {
 			const yesterday = new Date();
 			yesterday.setDate(yesterday.getDate() - 1);
 			yesterday.setHours(12, 0, 0, 0);
-			const tx: Transaction = {
+			startingTx = {
 				id: `tx-starting-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
 				seriesId: null,
 				mode: "earned",
@@ -77,13 +78,15 @@ export function WelcomeScreen() {
 				date: yesterday.toISOString(),
 				categoryId: null,
 			};
-			addTransactions([tx]);
+			addTransactions([startingTx]);
 		}
 		Keyboard.dismiss();
 		await markWelcomeSeen();
 		router.replace("/");
 		if (withTour) {
-			startTour();
+			// Pass the starting balance transaction explicitly so it's included in the tour
+			// snapshot even though its React state update hasn't been processed yet.
+			startTour(startingTx ? [startingTx] : []);
 		}
 	};
 
