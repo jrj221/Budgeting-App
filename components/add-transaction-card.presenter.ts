@@ -119,6 +119,16 @@ export function isDraftSubmittable(draft: DraftTransaction): boolean {
 	return amountDigitsToCents(draft.amountDigits) > 0 && draft.title.trim().length > 0;
 }
 
+export function isDraftAmountValid(draft: DraftTransaction): boolean {
+	return amountDigitsToCents(draft.amountDigits) > 0;
+}
+
+export function resolveTitle(title: string, mode: TransactionMode): string {
+	const trimmed = title.trim();
+	if (trimmed) return trimmed;
+	return mode === 'earned' ? 'Unnamed Earning' : 'Unnamed Expense';
+}
+
 export function formatDateLabel(date: Date, today: Date = new Date()): string {
 	const sameDay = (a: Date, b: Date) =>
 		a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();

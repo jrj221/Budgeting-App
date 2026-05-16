@@ -3,17 +3,19 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   buildTransactionSeries,
   DraftTransaction,
-  isDraftSubmittable,
+  isDraftAmountValid,
   makeInitialDraft,
   makeInitialRepeatConfig,
   RepeatConfig,
   RepeatEndMode,
   RepeatPeriod,
+  resolveTitle,
   sanitizeAmountDigits,
   Transaction,
   TransactionMode,
 } from '@/components/add-transaction-card.presenter';
 import { useCategories } from '@/contexts/categories-context';
+import { usePreferences } from '@/contexts/preferences-context';
 
 export type UseAddTransactionCardOptions = {
   onSubmit?: (transactions: Transaction[]) => void;
@@ -29,8 +31,10 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     setCategoryColor,
     setCategoryIcon,
   } = useCategories();
+  const { preferences } = usePreferences();
 
   const [draft, setDraft] = useState<DraftTransaction>(makeInitialDraft);
+  const [titleError, setTitleError] = useState(false);
   const [repeat, setRepeat] = useState<RepeatConfig>(() => makeInitialRepeatConfig());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
@@ -52,6 +56,7 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
 
   const setTitle = useCallback((title: string) => {
     setDraft((d) => ({ ...d, title }));
+    if (title.trim().length > 0) setTitleError(false);
   }, []);
 
   const setDate = useCallback((date: Date) => {
@@ -129,16 +134,22 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     setRepeat((r) => ({ ...r, count: Math.max(1, Math.floor(count || 1)) }));
   }, []);
 
-  const canSubmit = useMemo(() => isDraftSubmittable(draft), [draft]);
+  const canSubmit = useMemo(() => isDraftAmountValid(draft), [draft]);
 
   const submit = useCallback(() => {
-    if (!isDraftSubmittable(draft)) return;
-    const series = buildTransactionSeries(draft, repeat);
+    if (!isDraftAmountValid(draft)) return;
+    if (preferences.requireNamedTransactions && draft.title.trim() === '') {
+      setTitleError(true);
+      return;
+    }
+    const resolvedDraft = { ...draft, title: resolveTitle(draft.title, draft.mode) };
+    const series = buildTransactionSeries(resolvedDraft, repeat);
     onSubmit?.(series);
     setDraft({ ...makeInitialDraft(), mode: draft.mode });
     setRepeat(makeInitialRepeatConfig());
     setIsDatePickerOpen(false);
-  }, [draft, repeat, onSubmit]);
+    setTitleError(false);
+  }, [draft, repeat, onSubmit, preferences.requireNamedTransactions]);
 
   return {
     draft,
@@ -151,6 +162,7 @@ export function useAddTransactionCard(options: UseAddTransactionCardOptions = {}
     isEditingCategories,
     newCategoryName,
     canSubmit,
+    titleError,
     setMode,
     setAmountFromInput,
     setTitle,

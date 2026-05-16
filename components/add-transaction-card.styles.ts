@@ -68,6 +68,17 @@ export const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		backgroundColor: Palette.surface,
 		borderRadius: 14,
+		borderWidth: 1.5,
+		borderColor: "transparent",
+	},
+	titleInputError: {
+		borderColor: Palette.spent,
+	},
+	titleErrorHint: {
+		fontSize: 13,
+		color: Palette.spent,
+		marginTop: 4,
+		marginLeft: 4,
 	},
 	row: {
 		flexDirection: "row",

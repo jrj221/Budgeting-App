@@ -10,6 +10,7 @@ import { WelcomeScreen } from '@/components/welcome-screen';
 import { CategoriesProvider } from '@/contexts/categories-context';
 import { GoalsProvider } from '@/contexts/goals-context';
 import { OnboardingProvider, useOnboarding } from '@/contexts/onboarding-context';
+import { PreferencesProvider } from '@/contexts/preferences-context';
 import { AppThemeProvider } from '@/contexts/theme-context';
 import { TourProvider } from '@/contexts/tour-context';
 import { TransactionsProvider } from '@/contexts/transactions-context';
@@ -26,6 +27,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AppThemeProvider>
+          <PreferencesProvider>
           <OnboardingProvider>
             <CategoriesProvider>
               <TransactionsProvider>
@@ -42,6 +44,7 @@ export default function RootLayout() {
               </TransactionsProvider>
             </CategoriesProvider>
           </OnboardingProvider>
+          </PreferencesProvider>
         </AppThemeProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

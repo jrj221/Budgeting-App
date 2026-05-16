@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Palette } from "@/constants/colors";
@@ -7,6 +7,7 @@ import { DEV_MODE } from "@/constants/dev";
 import { useCategories } from "@/contexts/categories-context";
 import { useGoals } from "@/contexts/goals-context";
 import { useOnboarding } from "@/contexts/onboarding-context";
+import { usePreferences } from "@/contexts/preferences-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { useTransactions } from "@/contexts/transactions-context";
 import { styles } from "@/styles/settings.styles";
@@ -18,6 +19,7 @@ import {
 
 export default function SettingsScreen() {
 	const { scheme: current, schemes, setSchemeId } = useAppTheme();
+	const { preferences, setRequireNamedTransactions } = usePreferences();
 	const { transactions, addTransactions, clearAll } = useTransactions();
 	const { setCategoryBudget } = useCategories();
 	const { clearAll: clearAllGoals, addGoal, contributeToGoal } = useGoals();
@@ -139,6 +141,25 @@ export default function SettingsScreen() {
 						</Pressable>
 					</View>
 				)}
+
+				<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
+					<Text style={[styles.sectionTitle, { color: current.text }]}>Preferences</Text>
+					<View style={[styles.actionRow, styles.actionRowLast]}>
+						<Ionicons name="pencil-outline" size={20} color={current.text} />
+						<View style={{ flex: 1 }}>
+							<Text style={[styles.actionText, { color: current.text }]}>Require named transactions</Text>
+							<Text style={[styles.actionMeta, { color: current.textMuted }]}>
+								Warn when submitting a transaction without a name
+							</Text>
+						</View>
+						<Switch
+							value={preferences.requireNamedTransactions}
+							onValueChange={setRequireNamedTransactions}
+							trackColor={{ false: Palette.switchTrackOff, true: Palette.brand }}
+							ios_backgroundColor={Palette.switchTrackOff}
+						/>
+					</View>
+				</View>
 
 				<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
 					<Text style={[styles.sectionTitle, { color: current.text }]}>Start fresh</Text>

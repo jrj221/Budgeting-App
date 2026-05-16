@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   SCHEME_ID: 'budget:scheme_id',
   HAS_SEEN_WELCOME: 'budget:has-seen-welcome',
   RETIRED_GOAL_CATEGORY_IDS: 'budget:retired-goal-category-ids',
+  PREFERENCES: 'budget:preferences',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

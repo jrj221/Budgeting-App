@@ -63,14 +63,23 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				placeholderStyle={styles.amountMuted}
 			/>
 
-			<TextInput
-				style={[styles.titleInput, { backgroundColor: scheme.surface, color: scheme.text }]}
-				placeholder="What's it for?"
-				placeholderTextColor={scheme.textMuted}
-				value={presenter.draft.title}
-				onChangeText={presenter.setTitle}
-				returnKeyType="done"
-			/>
+			<View>
+				<TextInput
+					style={[
+						styles.titleInput,
+						{ backgroundColor: scheme.surface, color: scheme.text },
+						presenter.titleError && styles.titleInputError,
+					]}
+					placeholder="What's it for?"
+					placeholderTextColor={scheme.textMuted}
+					value={presenter.draft.title}
+					onChangeText={presenter.setTitle}
+					returnKeyType="done"
+				/>
+				{presenter.titleError && (
+					<Text style={styles.titleErrorHint}>Please give this transaction a name.</Text>
+				)}
+			</View>
 
 			<Pressable
 				style={[styles.row, { backgroundColor: scheme.surface }]}
