@@ -128,7 +128,7 @@ function ColorWheel({
     const dy = y - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
     const angle = (Math.atan2(dy, dx) * 180) / Math.PI; // -180..180, 0 = right
-    const h = (angle + 360) % 360;
+    const h = (angle + 90 + 360) % 360; // offset 90° so hue=0 aligns with 12 o'clock where wedges start
     const s = Math.min(100, (dist / WHEEL_R) * 100);
     onChange(h, s);
   };
@@ -144,7 +144,7 @@ function ColorWheel({
   );
 
   const indicatorR = (sat / 100) * WHEEL_R;
-  const indicatorRad = (hue * Math.PI) / 180;
+  const indicatorRad = ((hue - 90) * Math.PI) / 180;
   const ix = cx + indicatorR * Math.cos(indicatorRad);
   const iy = cy + indicatorR * Math.sin(indicatorRad);
 
