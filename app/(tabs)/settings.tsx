@@ -145,7 +145,6 @@ export default function SettingsScreen() {
 				<View style={[styles.section, { backgroundColor: current.cardBackground }]}>
 					<Text style={[styles.sectionTitle, { color: current.text }]}>Preferences</Text>
 					<View style={[styles.actionRow, styles.actionRowLast]}>
-						<Ionicons name="pencil-outline" size={20} color={current.text} />
 						<View style={{ flex: 1 }}>
 							<Text style={[styles.actionText, { color: current.text }]}>Require named transactions</Text>
 							<Text style={[styles.actionMeta, { color: current.textMuted }]}>

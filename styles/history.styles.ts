@@ -131,4 +131,15 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: Palette.textMuted,
   },
+  deleteBtnClip: {
+    width: 80,
+    overflow: 'hidden',
+  },
+  deleteBtn: {
+    width: 80,
+    height: '100%',
+    backgroundColor: Palette.spent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

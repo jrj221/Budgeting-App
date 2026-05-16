@@ -1,6 +1,10 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useRef, useMemo, useState } from "react";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated, { interpolate, useAnimatedStyle } from "react-native-reanimated";
+import type { SharedValue } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { formatCentsDisplay, Transaction } from "@/components/add-transaction-card.presenter";
@@ -11,6 +15,7 @@ import { useGoals } from "@/contexts/goals-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { useTransactions } from "@/contexts/transactions-context";
 import { styles } from "@/styles/history.styles";
+
 
 type TabKey = "upcoming" | "completed";
 
@@ -136,9 +141,25 @@ function TransactionGroupedList({
 	);
 }
 
+function DeleteAction({ progress, onPress }: { progress: SharedValue<number>; onPress: () => void }) {
+	const slideStyle = useAnimatedStyle(() => ({
+		transform: [{ translateX: interpolate(progress.value, [0, 1], [80, 0]) }],
+	}));
+	return (
+		<View style={styles.deleteBtnClip}>
+			<Animated.View style={slideStyle}>
+				<Pressable testID="swipe-delete-btn" onPress={onPress} style={styles.deleteBtn}>
+					<Ionicons name="trash" size={20} color="#fff" />
+				</Pressable>
+			</Animated.View>
+		</View>
+	);
+}
+
 function TransactionRow({ tx, isLast, onPress }: { tx: Transaction; isLast: boolean; onPress: () => void }) {
 	const { getCategory } = useCategories();
 	const { isRetiredGoalCategory, getRetiredGoalCategoryMeta } = useGoals();
+	const { deleteTransaction, deleteTransactionAndFuture } = useTransactions();
 	const { scheme } = useAppTheme();
 	const category = getCategory(tx.categoryId);
 	const retiredMeta = getRetiredGoalCategoryMeta(tx.categoryId);
@@ -153,70 +174,101 @@ function TransactionRow({ tx, isLast, onPress }: { tx: Transaction; isLast: bool
 	const badgeColor = goalColor ?? Palette.uncategorized;
 	const badgeLabel = isGoalReturn ? "Goal deleted" : tx.mode === "spent" ? "Contribution" : "Withdrawal";
 
+	const swipeableRef = useRef<SwipeableMethods>(null);
+
+	const handleSwipeDelete = () => {
+		swipeableRef.current?.close();
+		if (tx.seriesId) {
+			Alert.alert("Delete transaction", "Remove just this entry, or this and all future occurrences?", [
+				{ text: "Cancel", style: "cancel" },
+				{ text: "This only", style: "destructive", onPress: () => deleteTransaction(tx.id) },
+				{ text: "This & future", style: "destructive", onPress: () => deleteTransactionAndFuture(tx.id) },
+			]);
+		} else {
+			Alert.alert("Delete transaction?", "This cannot be undone.", [
+				{ text: "Cancel", style: "cancel" },
+				{ text: "Delete", style: "destructive", onPress: () => deleteTransaction(tx.id) },
+			]);
+		}
+	};
+
+	const renderRightActions = (progress: SharedValue<number>) => (
+		<DeleteAction progress={progress} onPress={handleSwipeDelete} />
+	);
+
 	return (
-		<Pressable
-			onPress={isLocked ? undefined : onPress}
-			style={[
-				styles.row,
-				isLast && styles.rowLast,
-				showGoalBadge ? { borderLeftWidth: 4, borderLeftColor: badgeColor, paddingLeft: 12 } : null,
-				isLocked && { opacity: 0.45 },
-			]}
+		<ReanimatedSwipeable
+			ref={swipeableRef}
+			enabled={!isLocked}
+			renderRightActions={renderRightActions}
+			rightThreshold={40}
+			overshootRight={false}
 		>
-			<View style={styles.rowMain}>
-				<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-					{showGoalBadge && <Ionicons name="flag" size={14} color={badgeColor} />}
-					<Text style={[styles.rowTitle, { color: scheme.text }]}>{tx.title}</Text>
-				</View>
-				<View style={styles.seriesBadge}>
-					{showGoalBadge && (
-						<>
-							<View
-								style={{
-									flexDirection: "row",
-									alignItems: "center",
-									gap: 3,
-									paddingHorizontal: 6,
-									paddingVertical: 2,
-									borderRadius: 999,
-									backgroundColor: badgeColor,
-								}}
-							>
-								<Ionicons
-									name={tx.mode === "spent" ? "arrow-up" : "arrow-down"}
-									size={9}
-									color="#fff"
-								/>
-								<Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>{badgeLabel}</Text>
+			<Pressable
+				onPress={isLocked ? undefined : onPress}
+				style={[
+					styles.row,
+					isLast && styles.rowLast,
+					{ backgroundColor: scheme.cardBackground },
+					showGoalBadge ? { borderLeftWidth: 4, borderLeftColor: badgeColor, paddingLeft: 12 } : null,
+					isLocked && { opacity: 0.45 },
+				]}
+			>
+				<View style={styles.rowMain}>
+					<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+						{showGoalBadge && <Ionicons name="flag" size={14} color={badgeColor} />}
+						<Text style={[styles.rowTitle, { color: scheme.text }]}>{tx.title}</Text>
+					</View>
+					<View style={styles.seriesBadge}>
+						{showGoalBadge && (
+							<>
+								<View
+									style={{
+										flexDirection: "row",
+										alignItems: "center",
+										gap: 3,
+										paddingHorizontal: 6,
+										paddingVertical: 2,
+										borderRadius: 999,
+										backgroundColor: badgeColor,
+									}}
+								>
+									<Ionicons
+										name={tx.mode === "spent" ? "arrow-up" : "arrow-down"}
+										size={9}
+										color="#fff"
+									/>
+									<Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>{badgeLabel}</Text>
+								</View>
+								{(categoryName || tx.seriesId) && (
+									<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>
+								)}
+							</>
+						)}
+						{category ? (
+							<View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+								<FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
+								<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
 							</View>
-							{(categoryName || tx.seriesId) && (
-								<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>
-							)}
-						</>
-					)}
-					{category ? (
-						<View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-							<FontAwesome5 name={category.icon as any} size={11} color={category.color} solid />
-							<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{categoryName}</Text>
-						</View>
-					) : retiredMeta ? (
-						<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{retiredMeta.name}</Text>
-					) : null}
-					{tx.seriesId && (
-						<>
-							{categoryName && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
-							<Ionicons name="repeat" size={12} color={scheme.textMuted} />
-							<Text style={[styles.seriesBadgeText, { color: scheme.textMuted }]}>Recurring</Text>
-						</>
-					)}
+						) : retiredMeta ? (
+							<Text style={[styles.rowMeta, { color: scheme.textMuted }]}>{retiredMeta.name}</Text>
+						) : null}
+						{tx.seriesId && (
+							<>
+								{categoryName && <Text style={[styles.rowMeta, { color: scheme.textMuted }]}>·</Text>}
+								<Ionicons name="repeat" size={12} color={scheme.textMuted} />
+								<Text style={[styles.seriesBadgeText, { color: scheme.textMuted }]}>Recurring</Text>
+							</>
+						)}
+					</View>
 				</View>
-			</View>
-			<Text style={[styles.rowAmount, tx.mode === "spent" ? styles.amountSpent : styles.amountEarned]}>
-				{sign}
-				{formatCentsDisplay(tx.amountCents)}
-			</Text>
-			<Ionicons name={isLocked ? "lock-closed-outline" : "chevron-forward"} size={16} color={scheme.textMuted} />
-		</Pressable>
+				<Text style={[styles.rowAmount, tx.mode === "spent" ? styles.amountSpent : styles.amountEarned]}>
+					{sign}
+					{formatCentsDisplay(tx.amountCents)}
+				</Text>
+				<Ionicons name={isLocked ? "lock-closed-outline" : "chevron-forward"} size={16} color={scheme.textMuted} />
+			</Pressable>
+		</ReanimatedSwipeable>
 	);
 }
 
