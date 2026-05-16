@@ -1,14 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Category, formatCentsDisplay, Transaction } from "@/components/add-transaction-card.presenter";
+import { generateSampleTransactions, SAMPLE_CATEGORY_BUDGETS } from "@/utils/sample-transactions";
 import { BudgetCard } from "@/components/budget-card";
 import { BudgetEditorSheet } from "@/components/budget-editor-sheet";
 import { chartStyles } from "@/components/charts/charts.styles";
 import { LineChart, LinePoint } from "@/components/charts/line-chart";
 import { PieChart, PieSlice } from "@/components/charts/pie-chart";
+import { HelpButton } from "@/components/help-button";
 import { Palette } from "@/constants/colors";
 import { useCategories } from "@/contexts/categories-context";
 import { useGoals } from "@/contexts/goals-context";
@@ -19,6 +21,22 @@ import { styles } from "@/styles/overview.styles";
 
 const UNCATEGORIZED_KEY = "__uncategorized__";
 
+const OVERVIEW_HELP_STEPS = [
+	{ title: "Balance", body: "Your running total — all earned minus all spent (not counting future transactions)." },
+	{
+		title: "Budgets",
+		body: "Per-category spending caps. Tap 'Edit' to set weekly or monthly limits; the bars fill as you spend.",
+	},
+	{
+		title: "Projected balance chart",
+		body: "Shows how your future balance trends based on upcoming scheduled transactions.",
+	},
+	{
+		title: "Spending breakdown",
+		body: "A pie chart of spending by category. Tap the filter button to change the time window (last 7 days, 30 days, a specific month, or all time).",
+	},
+];
+
 type PieFilter =
 	| { kind: "week" }
 	| { kind: "days30" }
@@ -26,8 +44,8 @@ type PieFilter =
 	| { kind: "month"; year: number; month: number };
 
 export default function OverviewScreen() {
-	const { transactions } = useTransactions();
-	const { categories } = useCategories();
+	const { transactions, addTransactions, replaceAll: replaceAllTx } = useTransactions();
+	const { categories, setCategoryBudget, replaceAll: replaceAllCats } = useCategories();
 	const { getRetiredGoalCategoryMeta } = useGoals();
 	const { scheme } = useAppTheme();
 	const { stepIndex } = useTour();
@@ -42,8 +60,36 @@ export default function OverviewScreen() {
 	const [budgetEditorOpen, setBudgetEditorOpen] = useState(false);
 
 	const scrollRef = useRef<ScrollView>(null);
+	const balanceRef = useRef<View>(null);
+	const lineChartRef = useRef<View>(null);
+	const budgetRef = useRef<View>(null);
+	const pieRef = useRef<View>(null);
+	// stepTargets order matches OVERVIEW_HELP_STEPS: balance, budgets, chart, pie
+	const stepTargets = [balanceRef, budgetRef, lineChartRef, pieRef];
+
+	// Snapshot/restore for help tour sample data injection.
+	const tourSnapshotRef = useRef<{ tx: typeof transactions; cats: typeof categories } | null>(null);
+	const needsSampleData = transactions.length === 0;
+
+	const onTourStart = useCallback(() => {
+		if (!needsSampleData) return;
+		tourSnapshotRef.current = { tx: [...transactions], cats: [...categories] };
+		addTransactions(generateSampleTransactions());
+		for (const b of SAMPLE_CATEGORY_BUDGETS) {
+			setCategoryBudget(b.categoryId, b.weeklyCents, b.monthlyOverrideCents);
+		}
+	}, [needsSampleData, transactions, categories, addTransactions, setCategoryBudget]);
+
+	const onTourDismiss = useCallback(() => {
+		const snap = tourSnapshotRef.current;
+		if (!snap) return;
+		replaceAllTx(snap.tx);
+		replaceAllCats(snap.cats);
+		tourSnapshotRef.current = null;
+	}, [replaceAllTx, replaceAllCats]);
+
 	const tourStep = stepIndex !== null ? TOUR_STEPS[stepIndex] : null;
-	const isOverviewTourInfo = tourStep?.kind === "info" && tourStep.tabIndex === 1;
+	const isOverviewTourInfo = tourStep?.kind === "info" && tourStep.tabIndex === 0;
 
 	useEffect(() => {
 		if (!isOverviewTourInfo) return;
@@ -87,13 +133,28 @@ export default function OverviewScreen() {
 		<SafeAreaView style={[styles.safe, { backgroundColor: scheme.background }]} edges={["top"]}>
 			<ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 				<View style={styles.header}>
-					<Text style={[styles.title, { color: scheme.text }]}>Overview</Text>
-					<Text style={[styles.subtitle, { color: scheme.textMuted }]}>
-						Where your money goes — past and projected.
-					</Text>
+					<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+						<View style={{ flex: 1 }}>
+							<Text style={[styles.title, { color: scheme.text }]}>Home</Text>
+							<Text style={[styles.subtitle, { color: scheme.textMuted }]}>
+								Where your money goes — past and projected.
+							</Text>
+						</View>
+						<HelpButton
+							steps={OVERVIEW_HELP_STEPS}
+							stepTargets={stepTargets}
+							scrollRef={scrollRef}
+							onStart={onTourStart}
+							onDismiss={onTourDismiss}
+						/>
+					</View>
 				</View>
 
-				<View style={[styles.balanceCard, { backgroundColor: scheme.cardBackground }]}>
+				<View
+					ref={balanceRef}
+					collapsable={false}
+					style={[styles.balanceCard, { backgroundColor: scheme.cardBackground }]}
+				>
 					<View style={styles.balanceHeaderRow}>
 						<Text style={[styles.balanceLabel, { color: scheme.textMuted }]}>Current balance</Text>
 						<Pressable
@@ -120,9 +181,15 @@ export default function OverviewScreen() {
 					</Text>
 				</View>
 
-				<BudgetCard onOpenEditor={() => setBudgetEditorOpen(true)} />
+				<View ref={budgetRef} collapsable={false}>
+					<BudgetCard onOpenEditor={() => setBudgetEditorOpen(true)} />
+				</View>
 
-				<View style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}>
+				<View
+					ref={lineChartRef}
+					collapsable={false}
+					style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}
+				>
 					<Text style={[chartStyles.title, { color: scheme.text }]}>Projected balance</Text>
 					<Text style={[chartStyles.subtitle, { color: scheme.textMuted }]}>
 						Running total of future earnings and expenses.
@@ -151,7 +218,11 @@ export default function OverviewScreen() {
 					)}
 				</View>
 
-				<View style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}>
+				<View
+					ref={pieRef}
+					collapsable={false}
+					style={[chartStyles.container, { backgroundColor: scheme.cardBackground }]}
+				>
 					<View style={chartStyles.headerRow}>
 						<View style={chartStyles.headerLeft}>
 							<Text style={[chartStyles.title, { color: scheme.text }]}>Spending by category</Text>

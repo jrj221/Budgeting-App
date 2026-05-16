@@ -1,5 +1,5 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useRef, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
@@ -9,12 +9,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { formatCentsDisplay, Transaction } from "@/components/add-transaction-card.presenter";
 import { EditTransactionSheet } from "@/components/edit-transaction-sheet";
+import { HelpButton } from "@/components/help-button";
 import { Palette } from "@/constants/colors";
 import { useCategories } from "@/contexts/categories-context";
 import { useGoals } from "@/contexts/goals-context";
 import { useAppTheme } from "@/contexts/theme-context";
 import { useTransactions } from "@/contexts/transactions-context";
 import { styles } from "@/styles/history.styles";
+import { generateSampleTransactions } from "@/utils/sample-transactions";
 
 
 type TabKey = "upcoming" | "completed";
@@ -24,11 +26,40 @@ const TAB_LABELS: Record<TabKey, string> = {
 	completed: "Completed",
 };
 
+const HISTORY_HELP_STEPS = [
+	{ title: "Upcoming / Completed", body: "Upcoming shows future-dated transactions; Completed shows everything dated today or earlier." },
+	{ title: "Transaction rows", body: "Tap any row to edit the amount, title, date, or category. Changes take effect immediately." },
+	{ title: "Swipe to delete", body: "Swipe a row left to reveal the Delete button and remove it in one tap." },
+	{ title: "Repeat icon", body: "The loop icon on a transaction means it's part of a recurring series. Editing asks whether to change just this one or the whole series." },
+];
+
 export default function HistoryScreen() {
-	const { transactions } = useTransactions();
+	const { transactions, addTransactions, replaceAll: replaceAllTx } = useTransactions();
 	const { scheme } = useAppTheme();
 	const [tab, setTab] = useState<TabKey>("upcoming");
 	const [editingId, setEditingId] = useState<string | null>(null);
+
+	const scrollRef = useRef<ScrollView>(null);
+	const tabBarRef = useRef<View>(null);
+	const listRef = useRef<View>(null);
+	const repeatRef = useRef<View>(null);
+	// step 0: tab bar, steps 1-2: list, step 3: first recurring row
+	const stepTargets = [tabBarRef, listRef, listRef, repeatRef];
+
+	const tourSnapshotRef = useRef<typeof transactions | null>(null);
+	const needsSampleData = transactions.length === 0;
+
+	const onTourStart = useCallback(() => {
+		if (!needsSampleData) return;
+		tourSnapshotRef.current = [...transactions];
+		addTransactions(generateSampleTransactions());
+	}, [needsSampleData, transactions, addTransactions]);
+
+	const onTourDismiss = useCallback(() => {
+		if (!tourSnapshotRef.current) return;
+		replaceAllTx(tourSnapshotRef.current);
+		tourSnapshotRef.current = null;
+	}, [replaceAllTx]);
 
 	const { upcoming, completed } = useMemo(() => splitByDate(transactions), [transactions]);
 	const visible = tab === "upcoming" ? upcoming : completed;
@@ -36,15 +67,26 @@ export default function HistoryScreen() {
 
 	return (
 		<SafeAreaView style={[styles.safe, { backgroundColor: scheme.background }]} edges={["top"]}>
-			<ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+			<ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 				<View style={styles.header}>
-					<Text style={[styles.title, { color: scheme.text }]}>History</Text>
-					<Text style={[styles.subtitle, { color: scheme.textMuted }]}>
-						Past activity and what's planned next.
-					</Text>
+					<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+						<View style={{ flex: 1 }}>
+							<Text style={[styles.title, { color: scheme.text }]}>History</Text>
+							<Text style={[styles.subtitle, { color: scheme.textMuted }]}>
+								Past activity and what's planned next.
+							</Text>
+						</View>
+						<HelpButton
+							steps={HISTORY_HELP_STEPS}
+							stepTargets={stepTargets}
+							scrollRef={scrollRef}
+							onStart={onTourStart}
+							onDismiss={onTourDismiss}
+						/>
+					</View>
 				</View>
 
-				<View style={[styles.tabBar, { backgroundColor: scheme.toggleTrack }]}>
+				<View ref={tabBarRef} collapsable={false} style={[styles.tabBar, { backgroundColor: scheme.toggleTrack }]}>
 					{(Object.keys(TAB_LABELS) as TabKey[]).map((key) => {
 						const active = tab === key;
 						const count = key === "upcoming" ? upcoming.length : completed.length;
@@ -71,15 +113,18 @@ export default function HistoryScreen() {
 					})}
 				</View>
 
-				{visible.length === 0 ? (
-					<EmptyState tab={tab} />
-				) : (
-					<TransactionGroupedList
-						transactions={visible}
-						reverse={tab === "completed"}
-						onSelect={setEditingId}
-					/>
-				)}
+				<View ref={listRef} collapsable={false}>
+					{visible.length === 0 ? (
+						<EmptyState tab={tab} />
+					) : (
+						<TransactionGroupedList
+							transactions={visible}
+							reverse={tab === "completed"}
+							onSelect={setEditingId}
+							repeatRef={repeatRef}
+						/>
+					)}
+				</View>
 			</ScrollView>
 
 			<EditTransactionSheet visible={editing !== null} transaction={editing} onClose={() => setEditingId(null)} />
@@ -112,17 +157,32 @@ function TransactionGroupedList({
 	transactions,
 	reverse,
 	onSelect,
+	repeatRef,
 }: {
 	transactions: Transaction[];
 	reverse: boolean;
 	onSelect: (id: string) => void;
+	repeatRef?: React.RefObject<View | null>;
 }) {
 	const groups = useMemo(() => groupByDay(transactions, reverse), [transactions, reverse]);
 	const { scheme } = useAppTheme();
 
+	// Find the index path of the first recurring transaction so we can attach repeatRef.
+	let firstRepeatGroup = -1;
+	let firstRepeatItem = -1;
+	outer: for (let gi = 0; gi < groups.length; gi++) {
+		for (let ii = 0; ii < groups[gi].items.length; ii++) {
+			if (groups[gi].items[ii].seriesId) {
+				firstRepeatGroup = gi;
+				firstRepeatItem = ii;
+				break outer;
+			}
+		}
+	}
+
 	return (
 		<View style={{ gap: 16 }}>
-			{groups.map((group) => (
+			{groups.map((group, gi) => (
 				<View key={group.key}>
 					<Text style={[styles.groupHeader, { color: scheme.textMuted }]}>{group.label}</Text>
 					<View style={[styles.list, { backgroundColor: scheme.cardBackground }]}>
@@ -132,6 +192,7 @@ function TransactionGroupedList({
 								tx={tx}
 								isLast={index === group.items.length - 1}
 								onPress={() => onSelect(tx.id)}
+								rowRef={gi === firstRepeatGroup && index === firstRepeatItem ? repeatRef : undefined}
 							/>
 						))}
 					</View>
@@ -156,7 +217,7 @@ function DeleteAction({ progress, onPress }: { progress: SharedValue<number>; on
 	);
 }
 
-function TransactionRow({ tx, isLast, onPress }: { tx: Transaction; isLast: boolean; onPress: () => void }) {
+function TransactionRow({ tx, isLast, onPress, rowRef }: { tx: Transaction; isLast: boolean; onPress: () => void; rowRef?: React.RefObject<View | null> }) {
 	const { getCategory } = useCategories();
 	const { isRetiredGoalCategory, getRetiredGoalCategoryMeta } = useGoals();
 	const { deleteTransaction, deleteTransactionAndFuture } = useTransactions();
@@ -205,6 +266,7 @@ function TransactionRow({ tx, isLast, onPress }: { tx: Transaction; isLast: bool
 			overshootRight={false}
 		>
 			<Pressable
+				ref={rowRef}
 				onPress={isLocked ? undefined : onPress}
 				style={[
 					styles.row,

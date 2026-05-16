@@ -5,12 +5,14 @@ import { Modal } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
+import { ScreenTourOverlay } from '@/components/screen-tour-overlay';
 import { TourOverlay } from '@/components/tour-overlay';
 import { WelcomeScreen } from '@/components/welcome-screen';
 import { CategoriesProvider } from '@/contexts/categories-context';
 import { GoalsProvider } from '@/contexts/goals-context';
 import { OnboardingProvider, useOnboarding } from '@/contexts/onboarding-context';
 import { PreferencesProvider } from '@/contexts/preferences-context';
+import { ScreenTourProvider } from '@/contexts/screen-tour-context';
 import { AppThemeProvider } from '@/contexts/theme-context';
 import { TourProvider } from '@/contexts/tour-context';
 import { TransactionsProvider } from '@/contexts/transactions-context';
@@ -33,12 +35,15 @@ export default function RootLayout() {
               <TransactionsProvider>
                 <GoalsProvider>
                   <TourProvider>
-                    <Stack>
-                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    </Stack>
-                    <StatusBar style="auto" />
-                    <TourOverlay />
-                    <WelcomeGate />
+                    <ScreenTourProvider>
+                      <Stack>
+                        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      </Stack>
+                      <StatusBar style="auto" />
+                      <TourOverlay />
+                      <ScreenTourOverlay />
+                      <WelcomeGate />
+                    </ScreenTourProvider>
                   </TourProvider>
                 </GoalsProvider>
               </TransactionsProvider>

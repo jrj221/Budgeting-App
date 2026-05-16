@@ -2,6 +2,7 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useState } from "react";
 import type { StyleProp, TextStyle } from "react-native";
+import { type RefObject } from "react";
 import {
 	InputAccessoryView,
 	Keyboard,
@@ -40,30 +41,45 @@ import { isColorSchemeDark, ModeColors, Palette, pickNextCategoryColor } from "@
 import { useAppTheme } from "@/contexts/theme-context";
 import { useAddTransactionCard } from "@/hooks/use-add-transaction-card";
 
+export type AddTransactionCardSectionRefs = {
+	modeToggle?: RefObject<View | null>;
+	amount?: RefObject<View | null>;
+	title?: RefObject<View | null>;
+	date?: RefObject<View | null>;
+	category?: RefObject<View | null>;
+	repeat?: RefObject<View | null>;
+	submit?: RefObject<View | null>;
+};
+
 export type AddTransactionCardProps = {
 	onSubmit?: (transactions: Transaction[]) => void;
+	sectionRefs?: AddTransactionCardSectionRefs;
 };
 
 const NUMPAD_ACCESSORY_ID = "number-pad-done";
 
-export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
+export function AddTransactionCard({ onSubmit, sectionRefs }: AddTransactionCardProps) {
 	const presenter = useAddTransactionCard({ onSubmit });
 	const { scheme } = useAppTheme();
 	const isDark = isColorSchemeDark(scheme);
 	return (
 		<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
-			<ModeToggle mode={presenter.draft.mode} onChange={presenter.setMode} />
+			<View ref={sectionRefs?.modeToggle} collapsable={false}>
+				<ModeToggle mode={presenter.draft.mode} onChange={presenter.setMode} />
+			</View>
 
-			<AmountInput
-				digits={presenter.draft.amountDigits}
-				onChangeDigits={presenter.setAmountFromInput}
-				accessoryViewId={NUMPAD_ACCESSORY_ID}
-				wrapStyle={styles.amountWrap}
-				textStyle={[styles.amount, { color: scheme.text }]}
-				placeholderStyle={styles.amountMuted}
-			/>
+			<View ref={sectionRefs?.amount} collapsable={false}>
+				<AmountInput
+					digits={presenter.draft.amountDigits}
+					onChangeDigits={presenter.setAmountFromInput}
+					accessoryViewId={NUMPAD_ACCESSORY_ID}
+					wrapStyle={styles.amountWrap}
+					textStyle={[styles.amount, { color: scheme.text }]}
+					placeholderStyle={styles.amountMuted}
+				/>
+			</View>
 
-			<View>
+			<View ref={sectionRefs?.title} collapsable={false}>
 				<TextInput
 					style={[
 						styles.titleInput,
@@ -81,104 +97,112 @@ export function AddTransactionCard({ onSubmit }: AddTransactionCardProps) {
 				)}
 			</View>
 
-			<Pressable
-				style={[styles.row, { backgroundColor: scheme.surface }]}
-				onPress={() => {
-					Keyboard.dismiss();
-					presenter.toggleDatePicker();
-				}}
-			>
-				<View style={styles.rowLeft}>
-					<Ionicons name="calendar-outline" size={20} color={scheme.text} />
-					<Text style={[styles.rowLabel, { color: scheme.text }]}>Date</Text>
-				</View>
-				<View style={styles.rowRight}>
-					<Text style={[styles.rowValue, { color: scheme.text }]}>
-						{formatDateLabel(presenter.draft.date)}
-					</Text>
-					<Ionicons
-						name={presenter.isDatePickerOpen ? "chevron-up" : "chevron-down"}
-						size={18}
-						color={scheme.textMuted}
-					/>
-				</View>
-			</Pressable>
-			{presenter.isDatePickerOpen && (
-				<View style={[styles.wheelWrap, styles.calendarWrap, { backgroundColor: scheme.cardBackground }]}>
-					<View style={styles.calendarScale}>
-						<DateTimePicker
-							value={presenter.draft.date}
-							mode="date"
-							display="inline"
-							themeVariant={isDark ? "dark" : "light"}
-							accentColor={scheme.lineChart}
-							onChange={(_, d) => {
-								if (d) presenter.setDate(d);
-							}}
-						/>
-					</View>
-				</View>
-			)}
-
-			{presenter.draft.mode === "spent" && (
+			<View ref={sectionRefs?.date} collapsable={false}>
 				<Pressable
 					style={[styles.row, { backgroundColor: scheme.surface }]}
 					onPress={() => {
 						Keyboard.dismiss();
-						presenter.openCategorySheet();
+						presenter.toggleDatePicker();
 					}}
 				>
 					<View style={styles.rowLeft}>
-						<Ionicons name="pricetag-outline" size={20} color={scheme.text} />
-						<Text style={[styles.rowLabel, { color: scheme.text }]}>Category</Text>
+						<Ionicons name="calendar-outline" size={20} color={scheme.text} />
+						<Text style={[styles.rowLabel, { color: scheme.text }]}>Date</Text>
+					</View>
+					<View style={styles.rowRight}>
+						<Text style={[styles.rowValue, { color: scheme.text }]}>
+							{formatDateLabel(presenter.draft.date)}
+						</Text>
+						<Ionicons
+							name={presenter.isDatePickerOpen ? "chevron-up" : "chevron-down"}
+							size={18}
+							color={scheme.textMuted}
+						/>
+					</View>
+				</Pressable>
+				{presenter.isDatePickerOpen && (
+					<View style={[styles.wheelWrap, styles.calendarWrap, { backgroundColor: scheme.cardBackground }]}>
+						<View style={styles.calendarScale}>
+							<DateTimePicker
+								value={presenter.draft.date}
+								mode="date"
+								display="inline"
+								themeVariant={isDark ? "dark" : "light"}
+								accentColor={scheme.lineChart}
+								onChange={(_, d) => {
+									if (d) presenter.setDate(d);
+								}}
+							/>
+						</View>
+					</View>
+				)}
+			</View>
+
+			{presenter.draft.mode === "spent" && (
+				<View ref={sectionRefs?.category} collapsable={false}>
+					<Pressable
+						style={[styles.row, { backgroundColor: scheme.surface }]}
+						onPress={() => {
+							Keyboard.dismiss();
+							presenter.openCategorySheet();
+						}}
+					>
+						<View style={styles.rowLeft}>
+							<Ionicons name="pricetag-outline" size={20} color={scheme.text} />
+							<Text style={[styles.rowLabel, { color: scheme.text }]}>Category</Text>
+						</View>
+						<View style={styles.rowRight}>
+							<Text
+								style={[
+									styles.rowValue,
+									{ color: scheme.text },
+									!presenter.selectedCategory && styles.rowValueMuted,
+								]}
+							>
+								{presenter.selectedCategory?.name ?? "None"}
+							</Text>
+							<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
+						</View>
+					</Pressable>
+				</View>
+			)}
+
+			<View ref={sectionRefs?.repeat} collapsable={false}>
+				<Pressable
+					style={[styles.row, { backgroundColor: scheme.surface }]}
+					onPress={() => {
+						Keyboard.dismiss();
+						presenter.openRepeatSheet();
+					}}
+				>
+					<View style={styles.rowLeft}>
+						<Ionicons name="repeat" size={20} color={scheme.text} />
+						<Text style={[styles.rowLabel, { color: scheme.text }]}>Repeat</Text>
 					</View>
 					<View style={styles.rowRight}>
 						<Text
 							style={[
 								styles.rowValue,
-								{ color: scheme.text },
-								!presenter.selectedCategory && styles.rowValueMuted,
+								{ color: scheme.text, fontSize: 10 },
+								!presenter.repeat.enabled && styles.rowValueMuted,
 							]}
 						>
-							{presenter.selectedCategory?.name ?? "None"}
+							{presenter.repeat.enabled ? formatRepeatSummary(presenter.repeat) : "Never"}
 						</Text>
 						<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
 					</View>
 				</Pressable>
-			)}
+			</View>
 
-			<Pressable
-				style={[styles.row, { backgroundColor: scheme.surface }]}
-				onPress={() => {
-					Keyboard.dismiss();
-					presenter.openRepeatSheet();
-				}}
-			>
-				<View style={styles.rowLeft}>
-					<Ionicons name="repeat" size={20} color={scheme.text} />
-					<Text style={[styles.rowLabel, { color: scheme.text }]}>Repeat</Text>
-				</View>
-				<View style={styles.rowRight}>
-					<Text
-						style={[
-							styles.rowValue,
-							{ color: scheme.text, fontSize: 10 },
-							!presenter.repeat.enabled && styles.rowValueMuted,
-						]}
-					>
-						{presenter.repeat.enabled ? formatRepeatSummary(presenter.repeat) : "Never"}
-					</Text>
-					<Ionicons name="chevron-forward" size={18} color={scheme.textMuted} />
-				</View>
-			</Pressable>
-
-			<Pressable
-				style={[styles.submit, !presenter.canSubmit && styles.submitDisabled]}
-				onPress={presenter.submit}
-				disabled={!presenter.canSubmit}
-			>
-				<Text style={styles.submitText}>{submitButtonLabel(presenter.draft.mode)}</Text>
-			</Pressable>
+			<View ref={sectionRefs?.submit} collapsable={false}>
+				<Pressable
+					style={[styles.submit, !presenter.canSubmit && styles.submitDisabled]}
+					onPress={presenter.submit}
+					disabled={!presenter.canSubmit}
+				>
+					<Text style={styles.submitText}>{submitButtonLabel(presenter.draft.mode)}</Text>
+				</Pressable>
+			</View>
 
 			<CategorySheet
 				visible={presenter.isCategorySheetOpen}

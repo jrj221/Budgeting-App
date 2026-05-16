@@ -15,34 +15,34 @@ export const TOUR_STEPS: TourStep[] = [
 	{
 		kind: "info",
 		title: "You're on Home",
-		body: "This is where you'll add transactions (income or expenses).",
+		body: "Your balance, spending charts, budgets, and category breakdown all live here.",
 		tabIndex: 0,
 	},
 	{
 		kind: "tap-tab",
-		title: "Tap Overview",
-		body: "Open the Overview tab.",
-		tabIndex: 1,
-		expectedPath: "/overview",
+		title: "Tap Add",
+		body: "Open the Add screen to log a transaction.",
+		tabIndex: 2,
+		expectedPath: "/",
 	},
 	{
 		kind: "info",
-		title: "Overview",
-		body: "Your current balance, budgets, projected cash flow, and a category breakdown of spending all live here.",
-		tabIndex: 1,
+		title: "Add Transaction",
+		body: "Log income or expenses here. Future-dated transactions show up in History as upcoming.",
+		tabIndex: 2,
 	},
 	{
 		kind: "tap-tab",
 		title: "Tap Goals",
 		body: "Open the Goals tab.",
-		tabIndex: 2,
+		tabIndex: 1,
 		expectedPath: "/goals",
 	},
 	{
 		kind: "info",
 		title: "Goals",
 		body: "Save toward something specific. Each goal makes its own category — contribute as an expense, withdraw as income. Pick a deadline or a weekly amount and the app works out the other.",
-		tabIndex: 2,
+		tabIndex: 1,
 	},
 	{
 		kind: "tap-tab",
@@ -75,7 +75,7 @@ export const TOUR_STEPS: TourStep[] = [
 		title: "Back to Home",
 		body: "Tap Home to wrap up.",
 		tabIndex: 0,
-		expectedPath: "/",
+		expectedPath: "/overview",
 	},
 ];
 

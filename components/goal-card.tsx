@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useEffect, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
 import {
   Alert,
   InputAccessoryView,
@@ -38,13 +38,19 @@ import { computeGoalProgress, Goal, weeksSince } from '@/utils/goal-calc';
 
 const ACCESSORY_ID_BASE = 'goal-amount-done';
 
+export type GoalCardSectionRefs = {
+  progressBar?: RefObject<View | null>;
+  actions?: RefObject<View | null>;
+};
+
 type GoalCardProps = {
   goal: Goal;
   color: string;
   onEdit: () => void;
+  sectionRefs?: GoalCardSectionRefs;
 };
 
-export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
+export function GoalCard({ goal, color, onEdit, sectionRefs }: GoalCardProps) {
   const { transactions } = useTransactions();
   const { contributeSeriestoGoal, withdrawFromGoal, deleteGoal, completeGoal } = useGoals();
   const { scheme } = useAppTheme();
@@ -193,40 +199,42 @@ export function GoalCard({ goal, color, onEdit }: GoalCardProps) {
 
       <Text style={[styles.weekly, { color: scheme.textMuted }]}>{weeklyLabel}</Text>
 
-      <BudgetProgressBar
-        color={color}
-        backgroundColor={paleColor(color)}
-        actualFraction={progress.fractionComplete}
-        plannedFraction={plannedFraction}
-        paceMarkerFraction={paceMarkerFraction}
-        patternKey={`goal-${goal.id}`}
-      />
+      <View ref={sectionRefs?.progressBar} collapsable={false}>
+        <BudgetProgressBar
+          color={color}
+          backgroundColor={paleColor(color)}
+          actualFraction={progress.fractionComplete}
+          plannedFraction={plannedFraction}
+          paceMarkerFraction={paceMarkerFraction}
+          patternKey={`goal-${goal.id}`}
+        />
+        <Text style={[paceStyle, { color: isComplete ? Palette.earned : scheme.textMuted }]}>{paceLabel}</Text>
+        {expectedLabel && <Text style={[styles.pace, { color: scheme.textMuted }]}>{expectedLabel}</Text>}
+      </View>
 
-      <Text style={[paceStyle, { color: isComplete ? Palette.earned : scheme.textMuted }]}>{paceLabel}</Text>
-      {expectedLabel && <Text style={[styles.pace, { color: scheme.textMuted }]}>{expectedLabel}</Text>}
-
-      {isComplete && (
-        <Pressable
-          style={[styles.actionBtn, { backgroundColor: Palette.earned, marginTop: 0 }]}
-          onPress={onComplete}>
-          <Ionicons name="checkmark-circle" size={16} color="#fff" />
-          <Text style={styles.contributeText}>Complete Goal</Text>
-        </Pressable>
-      )}
-
-      <View style={styles.actions}>
-        <Pressable
-          style={[styles.actionBtn, styles.contribute]}
-          onPress={() => setContributeOpen(true)}>
-          <Ionicons name="add" size={16} color="#fff" />
-          <Text style={styles.contributeText}>Contribute</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.actionBtn, styles.withdraw, { backgroundColor: scheme.surface, borderColor: scheme.border }]}
-          onPress={() => setWithdrawOpen(true)}>
-          <Ionicons name="remove" size={16} color={scheme.text} />
-          <Text style={[styles.withdrawText, { color: scheme.text }]}>Withdraw</Text>
-        </Pressable>
+      <View ref={sectionRefs?.actions} collapsable={false}>
+        {isComplete && (
+          <Pressable
+            style={[styles.actionBtn, { backgroundColor: Palette.earned, marginTop: 0 }]}
+            onPress={onComplete}>
+            <Ionicons name="checkmark-circle" size={16} color="#fff" />
+            <Text style={styles.contributeText}>Complete Goal</Text>
+          </Pressable>
+        )}
+        <View style={styles.actions}>
+          <Pressable
+            style={[styles.actionBtn, styles.contribute]}
+            onPress={() => setContributeOpen(true)}>
+            <Ionicons name="add" size={16} color="#fff" />
+            <Text style={styles.contributeText}>Contribute</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionBtn, styles.withdraw, { backgroundColor: scheme.surface, borderColor: scheme.border }]}
+            onPress={() => setWithdrawOpen(true)}>
+            <Ionicons name="remove" size={16} color={scheme.text} />
+            <Text style={[styles.withdrawText, { color: scheme.text }]}>Withdraw</Text>
+          </Pressable>
+        </View>
       </View>
 
       <ContributeSheet
