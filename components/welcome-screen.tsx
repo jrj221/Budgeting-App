@@ -82,7 +82,7 @@ export function WelcomeScreen() {
 		}
 		Keyboard.dismiss();
 		await markWelcomeSeen();
-		router.replace("/");
+		router.replace("/overview");
 		if (withTour) {
 			// Pass the starting balance transaction explicitly so it's included in the tour
 			// snapshot even though its React state update hasn't been processed yet.

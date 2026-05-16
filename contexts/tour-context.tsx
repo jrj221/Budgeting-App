@@ -165,9 +165,14 @@ export function TourProvider({ children }: { children: ReactNode }) {
 		});
 	}, []);
 
-	// When tour leaves the active state, restore the pre-tour snapshot.
+	// Restore the pre-tour snapshot as soon as we reach the final "Back to Home"
+	// tap-tab step so the data is already clean before the user navigates back.
+	// Also restore on skip/dismiss (stepIndex === null).
 	useEffect(() => {
-		if (stepIndex === null && snapshotRef.current) {
+		if (!snapshotRef.current) return;
+		const isLastStep = stepIndex === TOUR_STEPS.length - 1;
+		const isDone = stepIndex === null;
+		if (isLastStep || isDone) {
 			restoreSnapshot();
 		}
 	}, [stepIndex, restoreSnapshot]);

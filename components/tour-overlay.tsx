@@ -11,6 +11,17 @@ const TAB_COUNT = 5;
 const TAB_BAR_CONTENT_HEIGHT = 49;
 const TOTAL_INFO_STEPS = TOUR_STEPS.filter((s) => s.kind === "info").length;
 
+// Add button geometry (must match _layout.tsx AddTabButton styles)
+const ADD_TAB_INDEX = 2;
+const ADD_BTN_SIZE = 54;
+const ADD_BTN_MARGIN_BOTTOM = 16;
+// The button + its margin form a 70px effective flex-child in a 49px container.
+// justifyContent:center centers the 70px box, putting the button's visual top at -10.5px.
+const ADD_BTN_TOP_IN_TAB_BAR = (TAB_BAR_CONTENT_HEIGHT - (ADD_BTN_SIZE + ADD_BTN_MARGIN_BOTTOM)) / 2;
+// Center of the button relative to the tab bar's top edge.
+const ADD_BTN_CENTER_Y_IN_TAB_BAR = ADD_BTN_TOP_IN_TAB_BAR + ADD_BTN_SIZE / 2; // ≈ 16.5
+const ADD_SPOTLIGHT_PADDING = 12;
+
 function computeDisplayStep(stepIdx: number): number {
 	let count = 0;
 	for (let i = 0; i <= stepIdx; i++) {
@@ -86,99 +97,76 @@ export function TourOverlay() {
 	// tap-tab: dim around the highlighted tab + tooltip above it
 	const tooltipMargin = 16;
 	const tooltipMaxWidth = Math.min(320, width - 32);
-	const tooltipBottom = tabBarTotalH + tooltipMargin;
 	// tooltip horizontal anchor: centered above tab, clamped to screen
 	let tooltipLeft = tabX + tabW / 2 - tooltipMaxWidth / 2;
 	if (tooltipLeft < 16) tooltipLeft = 16;
-	if (tooltipLeft + tooltipMaxWidth > width - 16) {
-		tooltipLeft = width - 16 - tooltipMaxWidth;
+	if (tooltipLeft + tooltipMaxWidth > width - 16) tooltipLeft = width - 16 - tooltipMaxWidth;
+
+	const tooltip = (tooltipBottom: number) => (
+		<View
+			pointerEvents="box-none"
+			style={{ position: "absolute", left: tooltipLeft, bottom: tooltipBottom, width: tooltipMaxWidth }}
+		>
+			<View style={[styles.tooltip, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
+				<Text style={[styles.tooltipTitle, { color: scheme.text }]}>{step.title}</Text>
+				<Text style={[styles.tooltipBody, { color: scheme.textMuted }]}>{step.body}</Text>
+				<View style={styles.tooltipFooter}>
+					<Text style={styles.tooltipStep}>Step {stepNumber} of {TOTAL_INFO_STEPS}</Text>
+					<Pressable onPress={skip} hitSlop={8}>
+						<Text style={styles.tooltipSkip}>Skip tour</Text>
+					</Pressable>
+				</View>
+			</View>
+		</View>
+	);
+
+	// ── Add tab: circular spotlight that tracks the elevated round button ──────
+	if (step.tabIndex === ADD_TAB_INDEX) {
+		const btnCenterX = tabX + tabW / 2;
+		const btnCenterY = tabBarTop + ADD_BTN_CENTER_Y_IN_TAB_BAR;
+		const r = ADD_BTN_SIZE / 2 + ADD_SPOTLIGHT_PADDING; // spotlight radius
+
+		const cLeft = btnCenterX - r;
+		const cTop = btnCenterY - r;
+		const cSize = r * 2;
+
+		// Tooltip sits above the spotlight circle.
+		const circleTooltipBottom = height - cTop + tooltipMargin;
+
+		return (
+			<View style={styles.fill} pointerEvents="box-none">
+				{/* dim above circle */}
+				<Pressable style={{ position: "absolute", top: 0, left: 0, right: 0, height: Math.max(0, cTop), ...styleDim() }} />
+				{/* dim below circle */}
+				<Pressable style={{ position: "absolute", top: cTop + cSize, left: 0, right: 0, bottom: 0, ...styleDim() }} />
+				{/* dim left of circle */}
+				<Pressable style={{ position: "absolute", top: cTop, left: 0, width: Math.max(0, cLeft), height: cSize, ...styleDim() }} />
+				{/* dim right of circle */}
+				<Pressable style={{ position: "absolute", top: cTop, left: cLeft + cSize, right: 0, height: cSize, ...styleDim() }} />
+				{tooltip(circleTooltipBottom)}
+			</View>
+		);
 	}
 
+	// ── Regular tab: rectangular spotlight ────────────────────────────────────
 	return (
 		<View style={styles.fill} pointerEvents="box-none">
 			{/* dim above tab bar */}
-			<Pressable
-				style={{
-					position: "absolute",
-					top: 0,
-					left: 0,
-					right: 0,
-					height: tabBarTop,
-					...styleDim(),
-				}}
-			/>
+			<Pressable style={{ position: "absolute", top: 0, left: 0, right: 0, height: tabBarTop, ...styleDim() }} />
 			{/* dim left of highlighted tab */}
 			{tabX > 0 && (
-				<Pressable
-					style={{
-						position: "absolute",
-						top: tabBarTop,
-						left: 0,
-						width: tabX,
-						height: tabBarTotalH,
-						...styleDim(),
-					}}
-				/>
+				<Pressable style={{ position: "absolute", top: tabBarTop, left: 0, width: tabX, height: tabBarTotalH, ...styleDim() }} />
 			)}
 			{/* dim right of highlighted tab */}
 			{tabX + tabW < width && (
-				<Pressable
-					style={{
-						position: "absolute",
-						top: tabBarTop,
-						left: tabX + tabW,
-						width: width - (tabX + tabW),
-						height: tabBarTotalH,
-						...styleDim(),
-					}}
-				/>
+				<Pressable style={{ position: "absolute", top: tabBarTop, left: tabX + tabW, width: width - (tabX + tabW), height: tabBarTotalH, ...styleDim() }} />
 			)}
-			{/* highlight ring around the highlighted tab */}
-			{(() => {
-				const RING_HEIGHT = TAB_BAR_CONTENT_HEIGHT; // sit just inside the navbar
-				const ringTop = tabBarTop + 2;
-				const ringLeft = tabX + 8;
-				const ringWidth = tabW - 16;
-				return (
-					<View
-						pointerEvents="none"
-						style={[
-							styles.ring,
-							{
-								position: "absolute",
-								top: ringTop,
-								left: ringLeft,
-								width: ringWidth,
-								height: RING_HEIGHT,
-								borderRadius: 14,
-							},
-						]}
-					/>
-				);
-			})()}
-			{/* tooltip */}
+			{/* rectangular highlight ring */}
 			<View
-				pointerEvents="box-none"
-				style={{
-					position: "absolute",
-					left: tooltipLeft,
-					bottom: tooltipBottom,
-					width: tooltipMaxWidth,
-				}}
-			>
-				<View style={[styles.tooltip, { backgroundColor: scheme.surface, borderColor: scheme.border }]}>
-					<Text style={[styles.tooltipTitle, { color: scheme.text }]}>{step.title}</Text>
-					<Text style={[styles.tooltipBody, { color: scheme.textMuted }]}>{step.body}</Text>
-					<View style={styles.tooltipFooter}>
-						<Text style={styles.tooltipStep}>
-							Step {stepNumber} of {TOTAL_INFO_STEPS}
-						</Text>
-						<Pressable onPress={skip} hitSlop={8}>
-							<Text style={styles.tooltipSkip}>Skip tour</Text>
-						</Pressable>
-					</View>
-				</View>
-			</View>
+				pointerEvents="none"
+				style={[styles.ring, { position: "absolute", top: tabBarTop + 2, left: tabX + 8, width: tabW - 16, height: TAB_BAR_CONTENT_HEIGHT, borderRadius: 14 }]}
+			/>
+			{tooltip(tabBarTotalH + tooltipMargin)}
 		</View>
 	);
 }

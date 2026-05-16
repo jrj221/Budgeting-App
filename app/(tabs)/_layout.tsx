@@ -56,6 +56,7 @@ export default function TabLayout() {
 	return (
 		<Tabs
 			initialRouteName="overview"
+			detachInactiveScreens={false}
 			screenOptions={{
 				lazy: false,
 				tabBarActiveTintColor: scheme.lineChart,
