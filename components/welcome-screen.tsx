@@ -114,7 +114,7 @@ export function WelcomeScreen() {
 						<View style={styles.featureList}>
 							{FEATURES.map((f) => (
 								<View key={f.title} style={styles.featureRow}>
-									<View style={styles.featureIconWrap}>
+									<View style={[styles.featureIconWrap, { backgroundColor: scheme.surface }]}>
 										<Ionicons name={f.icon} size={18} color={Palette.brand} />
 									</View>
 									<View style={styles.featureBody}>
@@ -127,8 +127,8 @@ export function WelcomeScreen() {
 							))}
 						</View>
 
-						<View style={styles.card}>
-							<Text style={styles.cardLabel}>Pick a color scheme</Text>
+						<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
+							<Text style={[styles.cardLabel, { color: scheme.textMuted }]}>Pick a color scheme</Text>
 							<ScrollView
 								horizontal
 								showsHorizontalScrollIndicator={false}
@@ -140,24 +140,28 @@ export function WelcomeScreen() {
 										<Pressable
 											key={s.id}
 											onPress={() => setSchemeId(s.id)}
-											style={[styles.themeChip, active && styles.themeChipActive]}
+											style={[
+												styles.themeChip,
+												{ backgroundColor: scheme.surface, borderColor: scheme.border },
+												active && [styles.themeChipActive, { backgroundColor: scheme.cardBackground }],
+											]}
 										>
 											<View style={styles.swatchTrio}>
 												<View style={[styles.swatchSm, { backgroundColor: s.background }]} />
 												<View style={[styles.swatchSm, { backgroundColor: s.text }]} />
 												<View style={[styles.swatchSm, { backgroundColor: s.lineChart }]} />
 											</View>
-											<Text style={styles.themeName}>{s.name}</Text>
+											<Text style={[styles.themeName, { color: scheme.text }]}>{s.name}</Text>
 										</Pressable>
 									);
 								})}
 							</ScrollView>
-							<Text style={styles.cardHint}>You can change this anytime in Settings.</Text>
+							<Text style={[styles.cardHint, { color: scheme.textMuted }]}>You can change this anytime in Settings.</Text>
 						</View>
 
-						<View style={styles.card}>
-							<Text style={styles.cardLabel}>Set a budget (optional)</Text>
-							<Text style={styles.cardHint}>
+						<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
+							<Text style={[styles.cardLabel, { color: scheme.textMuted }]}>Set a budget (optional)</Text>
+							<Text style={[styles.cardHint, { color: scheme.textMuted }]}>
 								Pick how much you want to spend per category each week. You can also do this later from
 								Overview.
 							</Text>
@@ -167,8 +171,8 @@ export function WelcomeScreen() {
 							</Pressable>
 						</View>
 
-						<View style={styles.card}>
-							<Text style={styles.cardLabel}>Starting balance</Text>
+						<View style={[styles.card, { backgroundColor: scheme.cardBackground }]}>
+							<Text style={[styles.cardLabel, { color: scheme.textMuted }]}>Starting balance</Text>
 							<Pressable style={styles.balanceAmountWrap} onPress={focusBalance}>
 								<Text style={[styles.balanceAmount, !amountDigits && styles.balanceAmountMuted]}>
 									{formatAmountDisplay(amountDigits)}
@@ -184,7 +188,7 @@ export function WelcomeScreen() {
 									inputAccessoryViewID={ACCESSORY_ID}
 								/>
 							</Pressable>
-							<Text style={styles.cardHint}>
+							<Text style={[styles.cardHint, { color: scheme.textMuted }]}>
 								Tap the amount to enter what you have on hand. We&apos;ll log it as an earned
 								transaction so projections start from the right number.
 							</Text>
@@ -203,7 +207,7 @@ export function WelcomeScreen() {
 
 				{Platform.OS === "ios" && (
 					<InputAccessoryView nativeID={ACCESSORY_ID}>
-						<View style={styles.kbAccessory}>
+						<View style={[styles.kbAccessory, { backgroundColor: scheme.toggleTrack, borderTopColor: scheme.border }]}>
 							<Pressable onPress={() => Keyboard.dismiss()} hitSlop={10} style={styles.kbAccessoryBtn}>
 								<Ionicons name="checkmark" size={22} color={Palette.brand} />
 								<Text style={styles.kbAccessoryText}>Done</Text>
